@@ -65,5 +65,6 @@ update profiles set is_platform_owner = true where email = 'you@example.com';
    providers and add `https://<domain>/auth/callback` to the redirect URLs.
 2. Set every variable from `.env.example` in Vercel (generate `TICKET_SIGNING_SECRET` and `CRON_SECRET`).
 3. Verify `tickets.racikdigital.com` in Brevo (SPF, DKIM, DMARC).
-4. `vercel.json` schedules the email queue every minute and data retention daily (the every-minute
-   schedule needs a Vercel Pro plan).
+4. `vercel.json` runs both cron jobs once a day so it deploys on the Hobby plan (Hobby only allows daily
+   crons). Tickets are still sent right after registration, and every registration also retries a few
+   pending/failed emails. On Vercel Pro, change the email-queue schedule to `* * * * *` for faster retries.

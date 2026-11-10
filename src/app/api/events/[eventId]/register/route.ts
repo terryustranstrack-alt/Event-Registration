@@ -127,6 +127,9 @@ export async function POST(request: NextRequest, ctx: RouteContext<"/api/events/
   after(async () => {
     const { data: job } = await supabase.from("email_jobs").select("id").eq("registration_id", registrationId).eq("kind", "ticket").maybeSingle();
     if (job) await processEmailQueue({ onlyJobId: job.id }).catch((e) => console.error("ticket email failed", e));
+    // Opportunistic retry of other queued emails, so retries don't depend on the
+    // (daily on Hobby) cron schedule.
+    await processEmailQueue({ limit: 5 }).catch((e) => console.error("email queue retry failed", e));
   });
 
   return NextResponse.json({ ticketCode }, { status: 201 });
