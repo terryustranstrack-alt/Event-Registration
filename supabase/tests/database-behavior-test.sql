@@ -126,3 +126,31 @@ do $$ begin
     then raise exception 'FAIL tickets not queued for promoted people'; end if;
   raise notice 'ok waitlist promotion';
 end $$;
+
+-- Group registration: 1 email brings guests; each person gets a seat and a ticket.
+insert into public.events (org_id, slug, title_en, starts_at, ends_at, capacity, status, max_group_size, waitlist_enabled)
+  select id, 'grp', 'Group', now()+interval '1 day', now()+interval '1 day 2 hours', 4, 'published', 3, true from organizations where slug='org-a';
+set role service_role;
+select * from public.register_for_event((select id from events where slug='grp'),'G1','g1@x.com','en','{}','g-1',true, array['G1 friend','G1 kid'], array['g-1a','g-1b']);
+select error_code from public.register_for_event((select id from events where slug='grp'),'Big','big@x.com','en','{}','big-1',true, array['a1','a2','a3'], array['big-a','big-b','big-c']);
+select * from public.register_for_event((select id from events where slug='grp'),'G2','g2@x.com','en','{}','g-2',true, array['G2 friend'], array['g-2a']);
+reset role;
+do $$ begin
+  if (select seats_taken from events where slug='grp') <> 3 then raise exception 'FAIL group should take 3 seats'; end if;
+  if (select count(*) from registrations where ticket_code in ('g-1a','g-1b') and email='g1@x.com' and status='registered'
+        and group_id = (select id from registrations where ticket_code='g-1')) <> 2 then raise exception 'FAIL guests not linked'; end if;
+  if exists (select 1 from registrations where ticket_code='big-1') then raise exception 'FAIL group over the limit accepted'; end if;
+  if (select count(*) from registrations where ticket_code in ('g-2','g-2a') and status='waitlisted') <> 2
+    then raise exception 'FAIL group of 2 should wait together when only 1 seat is left'; end if;
+  if (select count(*) from email_jobs j join registrations r on r.id=j.registration_id where r.ticket_code like 'g-1%' and j.kind='ticket') <> 3
+    then raise exception 'FAIL each group member needs a ticket email'; end if;
+  raise notice 'ok group registration';
+end $$;
+-- One more seat -> the waiting group (2 people) now fits and moves up together.
+update events set capacity = 5 where slug='grp';
+do $$ begin
+  if (select count(*) from registrations where ticket_code in ('g-2','g-2a') and status='registered') <> 2
+    then raise exception 'FAIL waiting group not promoted together'; end if;
+  if (select seats_taken from events where slug='grp') <> 5 then raise exception 'FAIL seats after group promotion'; end if;
+  raise notice 'ok group waitlist promotion';
+end $$;

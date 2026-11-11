@@ -52,6 +52,23 @@ export function validateFixedFields(input: { fullName: string; email: string }) 
   return errors;
 }
 
+/**
+ * Nama-nama orang tambahan (rombongan). Kotak yang dibiarkan kosong diabaikan.
+ * Error disimpan per kotak ("guest_0", "guest_1", ...) supaya muncul tepat di
+ * bawah kotaknya; kelebihan orang dilaporkan di "guests".
+ */
+export function validateGuestNames(rawNames: string[], maxGroupSize: number) {
+  const names = rawNames.map((n) => n.trim());
+  const errors: Record<string, FieldError> = {};
+  names.forEach((name, i) => {
+    if (name && name.length < 2) errors[`guest_${i}`] = { key: "error.minLength", vars: { n: 2 } };
+    else if (name.length > 120) errors[`guest_${i}`] = { key: "error.maxLength", vars: { n: 120 } };
+  });
+  const filled = names.filter(Boolean);
+  if (filled.length + 1 > maxGroupSize) errors.guests = { key: "error.too_many_guests", vars: { n: maxGroupSize } };
+  return { names: filled, errors };
+}
+
 /** Validate one custom field. Returns the cleaned value or an error. */
 export function validateField(
   field: FormField,

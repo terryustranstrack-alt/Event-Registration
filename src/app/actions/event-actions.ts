@@ -75,6 +75,7 @@ function readEventForm(formData: FormData) {
     hide_capacity_total: formData.get("hide_capacity_total") === "on",
     allow_multiple_per_email: formData.get("allow_multiple_per_email") === "on",
     waitlist_enabled: formData.get("waitlist_enabled") === "on",
+    max_group_size: Number(formData.get("max_group_size") || 1),
     consent_enabled: formData.get("consent_enabled") === "on",
     retention_months: Number(formData.get("retention_months") || 12),
   };
@@ -103,6 +104,7 @@ const eventSchema = z
     hide_capacity_total: z.boolean(),
     allow_multiple_per_email: z.boolean(),
     waitlist_enabled: z.boolean(),
+    max_group_size: z.number().int("People per registration must be a whole number.").min(1, "People per registration must be at least 1.").max(20, "People per registration can be at most 20."),
     consent_enabled: z.boolean(),
     retention_months: z.number().int().min(1).max(120),
   })
@@ -325,6 +327,7 @@ function buildEventCopy(event: EventRow, userId: string) {
     registration_closes_at: event.registration_closes_at,
     allow_multiple_per_email: event.allow_multiple_per_email,
     waitlist_enabled: event.waitlist_enabled,
+    max_group_size: event.max_group_size,
     consent_enabled: event.consent_enabled,
     retention_months: event.retention_months,
     status: "draft" as const,

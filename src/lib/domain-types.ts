@@ -75,6 +75,7 @@ export interface EventRow {
   status: EventStatus;
   allow_multiple_per_email: boolean;
   waitlist_enabled: boolean;
+  max_group_size: number;
   consent_enabled: boolean;
   retention_months: number;
   created_at: string;
@@ -114,6 +115,7 @@ export interface Registration {
   language: Locale;
   answers: Record<string, unknown>;
   status: RegistrationStatus;
+  group_id: string | null;
   ticket_code: string;
   consent_at: string | null;
   email_status: DeliveryStatus;

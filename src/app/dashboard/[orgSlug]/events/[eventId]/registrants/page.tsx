@@ -24,7 +24,7 @@ export default async function RegistrantsPage({ params, searchParams }: PageProp
   const supabase = await createSupabaseServerClient();
   let query = supabase
     .from("registrations")
-    .select("id, full_name, email, status, created_at, checked_in_at, email_status, email_error, ticket_code", { count: "exact" })
+    .select("id, full_name, email, status, created_at, checked_in_at, email_status, email_error, ticket_code, group_id", { count: "exact" })
     .eq("event_id", event.id)
     .order("created_at", { ascending: false })
     .range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1);
@@ -93,7 +93,11 @@ export default async function RegistrantsPage({ params, searchParams }: PageProp
               {rows.map((r) => (
                 <tr key={r.id} className="border-t border-brand-50 align-middle hover:bg-brand-50/40">
                   <td className="px-4 py-3">
-                    <p className="font-bold">{r.full_name}</p>
+                    <p className="font-bold">
+                      {r.full_name}
+                      {/* Orang tambahan yang didaftarkan bersama pendaftar lain (email sama). */}
+                      {r.group_id && <span className="badge ml-2 bg-brand-50 align-middle text-xs text-brand-700">{t("reg.guest")}</span>}
+                    </p>
                     <p className="text-xs text-ink-700/75">{r.email}</p>
                   </td>
                   <td className="px-4 py-3">

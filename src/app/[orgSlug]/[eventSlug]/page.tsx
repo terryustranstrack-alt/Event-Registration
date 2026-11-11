@@ -144,6 +144,7 @@ export default async function PublicEventPage({ params }: PageProps<"/[orgSlug]/
             timezone={event.timezone}
             turnstileSiteKey={publicEnv.turnstileSiteKey}
             waitlistEnabled={event.waitlist_enabled}
+            maxGroupSize={event.max_group_size}
           />
         </div>
       </main>

@@ -220,6 +220,12 @@ export function EventEditorForm({
             <input id="registration_closes_at" name="registration_closes_at" type="datetime-local" className="input" defaultValue={local(event?.registration_closes_at)} />
           </div>
         </div>
+        {/* Rombongan: berapa orang boleh didaftarkan sekaligus dengan satu email (1 = hanya diri sendiri). */}
+        <div className="max-w-xs">
+          <label htmlFor="max_group_size" className="field-label">{t("event.maxGroupSize")}</label>
+          <input id="max_group_size" name="max_group_size" type="number" min={1} max={20} required className="input" defaultValue={event?.max_group_size ?? 1} aria-describedby="max-group-help" />
+          <p id="max-group-help" className="field-help">{t("event.maxGroupSizeHelp")}</p>
+        </div>
         <label className="flex items-center gap-2 text-sm">
           <input type="checkbox" name="hide_capacity_total" defaultChecked={event?.hide_capacity_total} className="h-4 w-4 accent-brand-600" /> {t("event.hideTotal")}
         </label>

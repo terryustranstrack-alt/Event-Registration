@@ -3,6 +3,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { RegistrationFormFields } from "@/components/registration-form-fields";
 import { TurnstileWidget } from "@/components/turnstile-widget";
+import { GuestNameFields } from "@/components/guest-name-fields";
 import { getTranslator, type Locale } from "@/lib/i18n/translate";
 import { formatDateTime, formatNumber } from "@/lib/i18n/format";
 import type { ClosedReason } from "@/lib/event-availability";
@@ -10,6 +11,7 @@ import type { FormField } from "@/lib/domain-types";
 import {
   validateCustomFields,
   validateFixedFields,
+  validateGuestNames,
   type FieldError,
   type RawValue,
 } from "@/lib/registration-validation";
@@ -33,6 +35,7 @@ export function PublicRegistrationPanel({
   timezone,
   turnstileSiteKey,
   waitlistEnabled,
+  maxGroupSize,
 }: {
   eventId: string;
   locale: Locale;
@@ -45,6 +48,7 @@ export function PublicRegistrationPanel({
   timezone: string;
   turnstileSiteKey: string;
   waitlistEnabled: boolean;
+  maxGroupSize: number;
 }) {
   const t = getTranslator(locale);
   const router = useRouter();
@@ -86,6 +90,7 @@ export function PublicRegistrationPanel({
     }
     const errs: Record<string, FieldError> = {
       ...validateFixedFields({ fullName: String(data.get("full_name") ?? ""), email: String(data.get("email") ?? "") }),
+      ...validateGuestNames(data.getAll("guest_name").map(String), maxGroupSize).errors,
       ...validateCustomFields(fields, values).errors,
     };
     if (consentEnabled && data.get("consent") !== "on") errs.consent = { key: "error.consent_required" };
@@ -131,6 +136,8 @@ export function PublicRegistrationPanel({
       if (code === "rate_limited") setFormError(t("error.rateLimited"));
       else if (code === "captcha") setFormError(t("error.captcha"));
       else if (code === "already_registered") setFormError(t("error.already_registered"));
+      else if (code === "too_many_guests") setFormError(t("error.too_many_guests", { n: maxGroupSize }));
+      else if (code === "not_enough_seats") setFormError(t("error.not_enough_seats"));
       else if (code && ["sold_out", "registration_closed", "event_closed", "not_open_yet", "ended"].includes(code)) {
         setAvailability((a) => ({ ...a, closedReason: code as ClosedReason, seatsLeft: code === "sold_out" ? 0 : a.seatsLeft }));
       } else if (code !== "validation") setFormError(t("error.generic"));
@@ -183,6 +190,7 @@ export function PublicRegistrationPanel({
             consentEnabled={consentEnabled}
             disabled={submitting}
           />
+          <GuestNameFields maxGroupSize={maxGroupSize} t={t} errors={errors} />
           <div className="mt-5">
             <TurnstileWidget siteKey={turnstileSiteKey} onToken={setCaptchaToken} resetSignal={captchaReset} language={locale} />
           </div>

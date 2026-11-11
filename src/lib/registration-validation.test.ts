@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { FormField } from "@/lib/domain-types";
-import { validateCustomFields, validateField, validateFixedFields } from "./registration-validation";
+import { validateCustomFields, validateField, validateFixedFields, validateGuestNames } from "./registration-validation";
 
 function field(partial: Partial<FormField>): FormField {
   return {
@@ -70,5 +70,21 @@ describe("registration validation", () => {
   it("skips archived fields", () => {
     const { errors } = validateCustomFields([field({ required: true, archived_at: "2026-01-01" })], {});
     expect(errors).toEqual({});
+  });
+});
+
+describe("validateGuestNames", () => {
+  it("ignores empty boxes and keeps the filled names", () => {
+    const { names, errors } = validateGuestNames(["Ani", "  ", "Budi "], 3);
+    expect(names).toEqual(["Ani", "Budi"]);
+    expect(errors).toEqual({});
+  });
+
+  it("flags names that are too short, under their own box", () => {
+    expect(validateGuestNames(["A"], 3).errors.guest_0?.key).toBe("error.minLength");
+  });
+
+  it("rejects more people than the event allows (including the main registrant)", () => {
+    expect(validateGuestNames(["Ani", "Budi"], 2).errors.guests?.key).toBe("error.too_many_guests");
   });
 });

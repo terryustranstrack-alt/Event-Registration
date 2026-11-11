@@ -419,6 +419,18 @@ export const dictionaryEn = {
   "waitlist.emailSubject": "You're on the waitlist: {title}",
   "waitlist.emailText": "The event is full right now. If a seat opens up, you'll get your ticket by email automatically. You don't need to do anything else.",
   "waitlist.emailButton": "View your registration",
+  "event.maxGroupSize": "Max people per registration",
+  "event.maxGroupSizeHelp": "1 = everyone registers themselves. Set higher (up to 20) to let one person register others with the same email. Each person takes a seat and gets their own ticket.",
+  "public.guestsTitle": "Registering others too?",
+  "public.guestsHelp": "Add up to {n} more people. They use your email, and each gets their own ticket.",
+  "public.guestName": "Person {n}: full name",
+  "public.guestAdd": "Add person",
+  "public.guestRemove": "Remove",
+  "error.too_many_guests": "You can register at most {n} people in total (including yourself).",
+  "error.not_enough_seats": "There aren't enough seats left for everyone. Remove some people and try again.",
+  "ticket.groupTitle": "Tickets in this registration ({n} people)",
+  "ticket.groupOpen": "Open ticket",
+  "reg.guest": "Guest",
 } as const;
 
 export type DictionaryKey = keyof typeof dictionaryEn;

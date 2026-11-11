@@ -14,6 +14,7 @@ import {
   isFileLike,
   validateCustomFields,
   validateFixedFields,
+  validateGuestNames,
   type FieldError,
   type RawValue,
 } from "@/lib/registration-validation";
@@ -73,9 +74,12 @@ export async function POST(request: NextRequest, ctx: RouteContext<"/api/events/
     } else values[field.id] = (formData.get(key) as string | null) ?? null;
   }
 
+  // Orang tambahan (rombongan): nama saja, memakai email yang sama dengan pendaftar utama.
+  const guests = validateGuestNames(formData.getAll("guest_name").map(String), event.max_group_size);
   const fieldErrors: Record<string, FieldError> = {
     ...validateFixedFields({ fullName, email }),
     ...validateCustomFields(fields, values).errors,
+    ...guests.errors,
   };
   if (event.consent_enabled && !consent) fieldErrors.consent = { key: "error.consent_required" };
   if (Object.keys(fieldErrors).length > 0) {
@@ -111,6 +115,8 @@ export async function POST(request: NextRequest, ctx: RouteContext<"/api/events/
   }
 
   const ticketCode = generateTicketCode(serverEnv().ticketSigningSecret);
+  // Setiap orang tambahan dapat tiket (kode QR) sendiri.
+  const guestTicketCodes = guests.names.map(() => generateTicketCode(serverEnv().ticketSigningSecret));
   const { data, error } = await supabase
     .rpc("register_for_event", {
       p_event_id: event.id,
@@ -120,6 +126,8 @@ export async function POST(request: NextRequest, ctx: RouteContext<"/api/events/
       p_answers: answers,
       p_ticket_code: ticketCode,
       p_consent: consent,
+      p_guest_names: guests.names,
+      p_guest_ticket_codes: guestTicketCodes,
     })
     .single<{ registration_id: string | null; error_code: string | null }>();
 
@@ -135,14 +143,31 @@ export async function POST(request: NextRequest, ctx: RouteContext<"/api/events/
   // Send the ticket right after responding (target: within 1 minute, NFR).
   const registrationId = data.registration_id;
   after(async () => {
-    const { data: job } = await supabase.from("email_jobs").select("id").eq("registration_id", registrationId).in("kind", ["ticket", "waitlist"]).maybeSingle();
-    if (job) await processEmailQueue({ onlyJobId: job.id }).catch((e) => console.error("ticket email failed", e));
+    await sendGroupEmailsNow(registrationId);
     // Opportunistic retry of other queued emails, so retries don't depend on the
     // (daily on Hobby) cron schedule.
     await processEmailQueue({ limit: 5 }).catch((e) => console.error("email queue retry failed", e));
   });
 
   return NextResponse.json({ ticketCode }, { status: 201 });
+}
+
+/**
+ * Kirim langsung email tiket/daftar tunggu untuk pendaftar utama dan semua
+ * orang tambahannya, tanpa menunggu jadwal antrean email berikutnya.
+ */
+async function sendGroupEmailsNow(registrationId: string) {
+  const supabase = createSupabaseServiceRoleClient();
+  const { data: people } = await supabase
+    .from("registrations")
+    .select("id")
+    .or(`id.eq.${registrationId},group_id.eq.${registrationId}`);
+  const ids = (people ?? []).map((p) => p.id as string);
+  if (ids.length === 0) return;
+  const { data: jobs } = await supabase.from("email_jobs").select("id").in("registration_id", ids).in("kind", ["ticket", "waitlist"]);
+  for (const job of jobs ?? []) {
+    await processEmailQueue({ onlyJobId: job.id }).catch((e) => console.error("ticket email failed", e));
+  }
 }
 
 /** Daftar kolom unggahan yang isi filenya tidak cocok dengan jenis file yang diakui. */

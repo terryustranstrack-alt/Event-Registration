@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { cookies } from "next/headers";
-import { getTicketByCode } from "@/lib/ticket-data";
+import { getGroupTickets, getTicketByCode } from "@/lib/ticket-data";
 import { getTranslator, isLocale, LOCALE_COOKIE, pickLocalized } from "@/lib/i18n/translate";
 import { formatDateTime, formatEventRange } from "@/lib/i18n/format";
 import { qrCodeSvg } from "@/lib/qr-code-image";
@@ -32,6 +32,7 @@ export default async function TicketPage({ params, searchParams }: PageProps<"/t
   const waitlisted = registration.status === "waitlisted";
   const hasValidTicket = !cancelled && !waitlisted;
   const qrSvg = hasValidTicket ? await qrCodeSvg(registration.ticket_code) : "";
+  const groupTickets = await getGroupTickets(registration);
   const ticketUrl = `${publicEnv.siteUrl}/t/${registration.ticket_code}`;
   const calendarInput = {
     uid: registration.id,
@@ -140,6 +141,22 @@ export default async function TicketPage({ params, searchParams }: PageProps<"/t
             )}
           </div>
         </div>
+        {/* Rombongan: link ke tiket orang-orang lain yang didaftarkan bersama (satu email). */}
+        {groupTickets.length > 0 && (
+          <section className="mt-5 rounded-2xl bg-white/15 p-4 text-white ring-1 ring-white/25 backdrop-blur">
+            <h2 className="font-extrabold">{t("ticket.groupTitle", { n: groupTickets.length + 1 })}</h2>
+            <ul className="mt-2 space-y-1.5">
+              {groupTickets.map((g) => (
+                <li key={g.ticket_code}>
+                  <a href={`/t/${g.ticket_code}`} className="flex items-center justify-between gap-2 rounded-xl bg-white/10 px-3 py-2 font-semibold hover:bg-white/20">
+                    <span className="truncate">{g.full_name}</span>
+                    <span className="shrink-0 text-sm underline">{g.status === "registered" ? t("ticket.groupOpen") : t(`reg.status.${g.status as "cancelled" | "waitlisted"}`)}</span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
         <p className="mt-6 text-center text-sm">
           <a href={`/${org.slug}/${event.slug}`} className="inline-flex items-center gap-1.5 font-semibold text-white/90 underline decoration-white/40 hover:text-white">
             <ArrowLeftIcon size={15} /> {title}
