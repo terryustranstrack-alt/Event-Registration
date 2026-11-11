@@ -39,7 +39,7 @@ export async function createOrganizationAction(_prev: FormState, formData: FormD
   await requireUser();
   const name = String(formData.get("name") ?? "").trim();
   const slug = slugify(String(formData.get("slug") || name));
-  const language = String(formData.get("default_language") ?? "id");
+  const language = String(formData.get("default_language") ?? "en");
   const contactEmail = String(formData.get("contact_email") ?? "").trim() || null;
 
   if (name.length < 2) return { error: "Name is too short." };
@@ -50,7 +50,7 @@ export async function createOrganizationAction(_prev: FormState, formData: FormD
     .rpc("create_organization", {
       p_name: name,
       p_slug: slug,
-      p_default_language: isLocale(language) ? language : "id",
+      p_default_language: isLocale(language) ? language : "en",
       p_contact_email: contactEmail,
     })
     .single<{ id: string; slug: string }>();
@@ -74,10 +74,10 @@ export async function updateOrganizationAction(_prev: FormState, formData: FormD
   const orgSlug = String(formData.get("org_slug"));
   const { org } = await requireOrgMembership(orgSlug, ["admin"]);
   const supabase = await createSupabaseServerClient();
-  const language = String(formData.get("default_language") ?? "id");
+  const language = String(formData.get("default_language") ?? "en");
   const update: Record<string, unknown> = {
     name: String(formData.get("name") ?? "").trim(),
-    default_language: isLocale(language) ? language : "id",
+    default_language: isLocale(language) ? language : "en",
     contact_email: String(formData.get("contact_email") ?? "").trim() || null,
     privacy_policy_url: String(formData.get("privacy_policy_url") ?? "").trim() || null,
   };

@@ -74,8 +74,8 @@ export function RegistrationFormFields({
         <label htmlFor={`${idPrefix}-language`} className="field-label">{t("public.language")}</label>
         {/* key: re-pick the default when the visitor switches the page language. */}
         <select key={locale} id={`${idPrefix}-language`} name="language" defaultValue={locale} className="input">
-          <option value="id">{t("lang.id")}</option>
           <option value="en">{t("lang.en")}</option>
+          <option value="id">{t("lang.id")}</option>
         </select>
       </div>
 
