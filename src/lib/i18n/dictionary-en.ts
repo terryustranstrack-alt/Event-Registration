@@ -26,6 +26,11 @@ export const dictionaryEn = {
   "auth.haveAccount": "Already have an account?",
   "auth.checkEmail": "Check your inbox to confirm your email, then sign in.",
   "auth.invalid": "Email or password is incorrect.",
+  "auth.confirmTitle": "Confirm your email",
+  "auth.confirmHelp": "Press the button to confirm your email address and sign in.",
+  "auth.confirmButton": "Confirm email",
+  "auth.confirmExpired": "This confirmation link is invalid or has expired. Sign in to get a new one, or sign up again.",
+  "auth.linkExpired": "That email link is invalid or has expired. Sign in, or sign up again to get a new link.",
 
   "landing.cta": "Start for free",
   "landing.f1": "Branded event page with a custom form in under 15 minutes",

@@ -64,9 +64,17 @@ update profiles set is_platform_owner = true where email = 'you@example.com';
 ## Deploying (Vercel + Supabase)
 
 1. Create the Supabase project, run `npx supabase link` and `npx supabase db push`. Enable Google in Auth
-   providers and add `https://<domain>/auth/callback` to the redirect URLs.
-2. Set every variable from `.env.example` in Vercel (generate `TICKET_SIGNING_SECRET` and `CRON_SECRET`).
-3. Verify `tickets.racikdigital.com` in Brevo (SPF, DKIM, DMARC).
-4. `vercel.json` runs both cron jobs once a day so it deploys on the Hobby plan (Hobby only allows daily
+   providers. In **Authentication → URL Configuration** set the Site URL to the production URL and add
+   `https://<domain>/auth/callback` to the redirect URLs.
+2. In **Authentication → Email Templates → Confirm signup**, point the link at the app's confirm page
+   (it verifies on a button press, so email scanners can't use up the link, and it works across devices):
+
+   ```html
+   <h2>Confirm your email</h2>
+   <p><a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=signup&redirect_to={{ .RedirectTo }}">Confirm your email</a></p>
+   ```
+3. Set every variable from `.env.example` in Vercel (generate `TICKET_SIGNING_SECRET` and `CRON_SECRET`).
+4. Verify `tickets.racikdigital.com` in Brevo (SPF, DKIM, DMARC).
+5. `vercel.json` runs both cron jobs once a day so it deploys on the Hobby plan (Hobby only allows daily
    crons). Tickets are still sent right after registration, and every registration also retries a few
    pending/failed emails. On Vercel Pro, change the email-queue schedule to `* * * * *` for faster retries.

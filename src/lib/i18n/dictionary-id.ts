@@ -28,6 +28,11 @@ export const dictionaryId: Dictionary = {
   "auth.haveAccount": "Sudah punya akun?",
   "auth.checkEmail": "Cek kotak masuk Anda untuk konfirmasi email, lalu masuk.",
   "auth.invalid": "Email atau kata sandi salah.",
+  "auth.confirmTitle": "Konfirmasi email Anda",
+  "auth.confirmHelp": "Tekan tombol untuk mengonfirmasi alamat email dan masuk.",
+  "auth.confirmButton": "Konfirmasi email",
+  "auth.confirmExpired": "Tautan konfirmasi ini tidak valid atau sudah kedaluwarsa. Masuk untuk mendapatkan tautan baru, atau daftar ulang.",
+  "auth.linkExpired": "Tautan email tidak valid atau sudah kedaluwarsa. Masuk, atau daftar ulang untuk mendapatkan tautan baru.",
 
   "landing.cta": "Mulai gratis",
   "landing.f1": "Halaman acara bermerek dengan formulir khusus dalam waktu kurang dari 15 menit",
