@@ -1,6 +1,6 @@
 // English UI strings (FR-10.1). The Indonesian file must provide every key.
 export const dictionaryEn = {
-  "app.name": "Racik Events",
+  "app.name": "Racik EventMu",
   "app.tagline": "Event pages, registration forms, QR tickets and door check-in for Indonesian organizers.",
   "lang.en": "English",
   "lang.id": "Bahasa Indonesia",

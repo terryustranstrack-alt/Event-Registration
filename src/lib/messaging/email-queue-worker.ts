@@ -126,7 +126,7 @@ async function sendTicketJob(job: EmailJob): Promise<SendResult> {
     ticketCode: reg.ticket_code,
   });
   const ics = buildIcsFile({
-    uid: `${reg.id}@racik-events`,
+    uid: `${reg.id}@racik-eventmu`,
     title,
     location: event.online_url ?? venue ?? undefined,
     startsAt: event.starts_at,

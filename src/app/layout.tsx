@@ -6,7 +6,7 @@ import "./globals.css";
 const inter = Inter({ variable: "--font-inter", subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: { default: "Racik Events", template: "%s · Racik Events" },
+  title: { default: "Racik EventMu", template: "%s · Racik EventMu" },
   description: "Event pages, registration forms, QR tickets and door check-in.",
 };
 

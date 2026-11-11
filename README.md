@@ -1,4 +1,6 @@
-# Event Registration Platform
+# Racik EventMu
+
+Live: https://racik-eventmu.vercel.app
 
 Multi-organization web platform for Indonesian organizers: publish an event with a custom
 registration form, attendees get a QR ticket by email, staff scan it at the door, organizers see

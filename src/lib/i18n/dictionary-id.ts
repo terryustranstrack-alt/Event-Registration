@@ -2,7 +2,7 @@ import type { Dictionary } from "./dictionary-en";
 
 // Teks antarmuka Bahasa Indonesia (FR-10.1).
 export const dictionaryId: Dictionary = {
-  "app.name": "Racik Events",
+  "app.name": "Racik EventMu",
   "app.tagline": "Halaman acara, formulir pendaftaran, tiket QR, dan check-in di pintu masuk untuk penyelenggara Indonesia.",
   "lang.en": "English",
   "lang.id": "Bahasa Indonesia",
