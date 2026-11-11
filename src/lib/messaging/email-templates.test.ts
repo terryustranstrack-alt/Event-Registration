@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { reminderEmail, ticketEmail, type TicketEmailInput } from "./email-templates";
+import { reminderEmail, ticketEmail, waitlistEmail, type TicketEmailInput } from "./email-templates";
 
 const base: TicketEmailInput = {
   locale: "en",
@@ -41,6 +41,14 @@ describe("ticketEmail", () => {
     const { subject, html } = ticketEmail(base);
     expect(subject).toBe("Your ticket: Tech Meetup");
     expect(html).toContain(base.qrImageUrl);
+  });
+
+  it("waitlist email has no QR code and no online link", () => {
+    const { subject, html } = waitlistEmail({ ...base, onlineUrl: "https://zoom.us/secret" });
+    expect(subject).toContain("waitlist");
+    expect(html).not.toContain(base.qrImageUrl);
+    expect(html).not.toContain("zoom.us/secret");
+    expect(html).toContain(base.ticketUrl);
   });
 
   it("includes a Send ticket to WhatsApp link with the ticket address", () => {

@@ -91,3 +91,38 @@ select checked_in_at is null as undone from registrations where ticket_code='cod
 do $$ begin update events set slug='new-slug' where slug='launch';
   raise exception 'FAIL slug'; exception when raise_exception then raise notice 'ok slug locked'; end $$;
 reset role;
+
+-- Waitlist: event with 1 seat and waitlist on.
+insert into public.events (org_id, slug, title_en, starts_at, ends_at, capacity, status, waitlist_enabled)
+  select id, 'wl', 'Waitlist', now()+interval '1 day', now()+interval '1 day 2 hours', 1, 'published', true from organizations where slug='org-a';
+set role service_role;
+select * from public.register_for_event((select id from events where slug='wl'),'W1','w1@x.com','en','{}','wl-1',true);
+select * from public.register_for_event((select id from events where slug='wl'),'W2','w2@x.com','en','{}','wl-2',true);
+select * from public.register_for_event((select id from events where slug='wl'),'W3','w3@x.com','en','{}','wl-3',true);
+select * from public.register_for_event((select id from events where slug='wl'),'W2 again','w2@x.com','en','{}','wl-2b',true);
+reset role;
+do $$ begin
+  if (select status from registrations where ticket_code='wl-1') <> 'registered' then raise exception 'FAIL wl-1 should have a seat'; end if;
+  if (select status from registrations where ticket_code='wl-2') <> 'waitlisted' then raise exception 'FAIL wl-2 should wait'; end if;
+  if exists (select 1 from registrations where ticket_code='wl-2b') then raise exception 'FAIL duplicate waitlist entry'; end if;
+  if (select seats_taken from events where slug='wl') <> 1 then raise exception 'FAIL waitlist must not take seats'; end if;
+  if (select count(*) from email_jobs j join registrations r on r.id=j.registration_id where r.ticket_code in ('wl-2','wl-3') and j.kind='waitlist') <> 2
+    then raise exception 'FAIL waitlist emails'; end if;
+  raise notice 'ok waitlist fills when full';
+end $$;
+set role authenticated;
+select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-00000000000a',false);
+select result from public.check_in_ticket((select id from events where slug='wl'),'wl-2','scan');
+-- Cancel the seat holder -> first in line (W2) gets the seat automatically.
+select public.cancel_registration((select id from registrations where ticket_code='wl-1'));
+-- Raise capacity -> next in line (W3) gets a seat too.
+update events set capacity = 2 where slug='wl';
+reset role;
+do $$ begin
+  if (select status from registrations where ticket_code='wl-2') <> 'registered' then raise exception 'FAIL wl-2 not promoted after cancel'; end if;
+  if (select status from registrations where ticket_code='wl-3') <> 'registered' then raise exception 'FAIL wl-3 not promoted after capacity increase'; end if;
+  if (select seats_taken from events where slug='wl') <> 2 then raise exception 'FAIL seats after promotion'; end if;
+  if (select count(*) from email_jobs j join registrations r on r.id=j.registration_id where r.ticket_code in ('wl-2','wl-3') and j.kind='ticket') <> 2
+    then raise exception 'FAIL tickets not queued for promoted people'; end if;
+  raise notice 'ok waitlist promotion';
+end $$;

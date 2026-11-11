@@ -51,8 +51,10 @@ export async function POST(request: NextRequest, ctx: RouteContext<"/api/events/
     return NextResponse.json({ error: "event_not_found" }, { status: 404 });
   }
   const { event, fields } = loaded;
+  // Kursi penuh tetap boleh daftar kalau daftar tunggu aktif (masuk antrean, bukan dapat kursi).
   const closed = getClosedReason(event);
-  if (closed) return NextResponse.json({ error: closed }, { status: 409 });
+  const waitlistOpen = closed === "sold_out" && event.waitlist_enabled;
+  if (closed && !waitlistOpen) return NextResponse.json({ error: closed }, { status: 409 });
 
   const fullName = String(formData.get("full_name") ?? "").trim();
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
@@ -133,7 +135,7 @@ export async function POST(request: NextRequest, ctx: RouteContext<"/api/events/
   // Send the ticket right after responding (target: within 1 minute, NFR).
   const registrationId = data.registration_id;
   after(async () => {
-    const { data: job } = await supabase.from("email_jobs").select("id").eq("registration_id", registrationId).eq("kind", "ticket").maybeSingle();
+    const { data: job } = await supabase.from("email_jobs").select("id").eq("registration_id", registrationId).in("kind", ["ticket", "waitlist"]).maybeSingle();
     if (job) await processEmailQueue({ onlyJobId: job.id }).catch((e) => console.error("ticket email failed", e));
     // Opportunistic retry of other queued emails, so retries don't depend on the
     // (daily on Hobby) cron schedule.

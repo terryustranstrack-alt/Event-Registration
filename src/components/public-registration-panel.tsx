@@ -32,6 +32,7 @@ export function PublicRegistrationPanel({
   opensAt,
   timezone,
   turnstileSiteKey,
+  waitlistEnabled,
 }: {
   eventId: string;
   locale: Locale;
@@ -43,6 +44,7 @@ export function PublicRegistrationPanel({
   opensAt: string | null;
   timezone: string;
   turnstileSiteKey: string;
+  waitlistEnabled: boolean;
 }) {
   const t = getTranslator(locale);
   const router = useRouter();
@@ -143,6 +145,8 @@ export function PublicRegistrationPanel({
   }
 
   const { seatsLeft, capacity, closedReason } = availability;
+  // Kursi penuh tapi daftar tunggu aktif: formulir tetap tampil, untuk masuk antrean.
+  const waitlistOpen = closedReason === "sold_out" && waitlistEnabled;
   const seatsText =
     capacity !== null
       ? t("public.seatsLeft", { left: formatNumber(seatsLeft, locale), total: formatNumber(capacity, locale) })
@@ -151,14 +155,17 @@ export function PublicRegistrationPanel({
   return (
     <section aria-labelledby="register-heading" className="card border-0 p-6 shadow-2xl shadow-brand-800/20 ring-1 ring-brand-100">
       <div className="mb-4 flex items-center justify-between gap-3">
-        <h2 id="register-heading" className="text-2xl font-extrabold tracking-tight">{t("public.registerNow")}</h2>
+        <h2 id="register-heading" className="text-2xl font-extrabold tracking-tight">{t(waitlistOpen ? "public.waitlistTitle" : "public.registerNow")}</h2>
         {closedReason !== "ended" && (
           <p className={`badge px-3 py-1 ${seatsLeft === 0 ? "bg-red-100 text-red-800" : "bg-orange-100 text-orange-800"}`} aria-live="polite">
             {seatsText}
           </p>
         )}
       </div>
-      {closedReason ? (
+      {waitlistOpen && (
+        <p role="status" className="mb-4 rounded-xl bg-amber-50 p-4 text-sm font-semibold text-amber-900">{t("public.waitlistText")}</p>
+      )}
+      {closedReason && !waitlistOpen ? (
         <p role="status" className="rounded-xl bg-amber-50 p-4 font-semibold text-amber-900">
           {closedReason === "not_open_yet" && opensAt
             ? t("public.closed.not_open_yet", { date: formatDateTime(opensAt, locale, timezone) })
@@ -181,7 +188,7 @@ export function PublicRegistrationPanel({
           </div>
           {formError && <p role="alert" className="field-error mt-4">{formError}</p>}
           <button type="submit" className="btn-primary mt-6 w-full py-3.5 text-base" disabled={submitting}>
-            {submitting ? t("public.submitting") : t("public.submit")}
+            {submitting ? t("public.submitting") : t(waitlistOpen ? "public.joinWaitlist" : "public.submit")}
           </button>
         </form>
       )}

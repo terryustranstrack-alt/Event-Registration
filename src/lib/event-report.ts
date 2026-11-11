@@ -1,7 +1,7 @@
-import type { FormField } from "@/lib/domain-types";
+import type { FormField, RegistrationStatus } from "@/lib/domain-types";
 
 interface ReportRow {
-  status: "registered" | "cancelled";
+  status: RegistrationStatus;
   created_at: string;
   checked_in_at: string | null;
   answers: Record<string, unknown>;

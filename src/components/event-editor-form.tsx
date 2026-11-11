@@ -226,6 +226,13 @@ export function EventEditorForm({
         <label className="flex items-center gap-2 text-sm">
           <input type="checkbox" name="allow_multiple_per_email" defaultChecked={event?.allow_multiple_per_email} className="h-4 w-4 accent-brand-600" /> {t("event.allowMultiple")}
         </label>
+        {/* Daftar tunggu: saat kursi penuh, orang tetap bisa mendaftar dan otomatis dapat kursi kalau ada yang batal. */}
+        <div>
+          <label className="flex items-center gap-2 text-sm">
+            <input type="checkbox" name="waitlist_enabled" defaultChecked={event?.waitlist_enabled} aria-describedby="waitlist-help" className="h-4 w-4 accent-brand-600" /> {t("event.waitlist")}
+          </label>
+          <p id="waitlist-help" className="field-help ml-6">{t("event.waitlistHelp")}</p>
+        </div>
       </FormSection>
 
       <FormSection title={t("event.section.privacy")} icon={<ShieldIcon size={18} />}>

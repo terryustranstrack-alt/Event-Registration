@@ -63,6 +63,39 @@ export function reminderEmail(input: TicketEmailInput) {
   };
 }
 
+/**
+ * Email "Anda masuk daftar tunggu": jadwal dan lokasi saja — tanpa QR, tanpa
+ * link online — karena orangnya belum punya kursi. Tiket dikirim terpisah
+ * otomatis kalau nanti dapat kursi.
+ */
+export function waitlistEmail(input: TicketEmailInput) {
+  const t = getTranslator(input.locale);
+  const when = formatEventRange(input.startsAt, input.endsAt, input.locale, input.timezone);
+  const subject = t("waitlist.emailSubject", { title: input.eventTitle });
+  const body = `<h1 style="font-size:22px;margin:0 0 8px">${esc(t("ticket.waitlistedTitle"))}</h1>
+<p style="margin:0 0 4px">${esc(input.registrantName)}</p>
+<p style="margin:0 0 16px;color:#52525b">${esc(t("waitlist.emailText"))}</p>
+<h2 style="font-size:18px;margin:0 0 4px">${esc(input.eventTitle)}</h2>
+<p style="margin:0 0 4px">📅 ${esc(when)}</p>
+${input.venue ? `<p style="margin:0 0 4px">📍 ${esc(input.venue)}</p>` : ""}
+<p style="text-align:center;margin-top:24px"><a href="${esc(input.ticketUrl)}" style="display:inline-block;background:#4f46e5;color:#ffffff;text-decoration:none;padding:12px 20px;border-radius:8px;font-weight:bold">${esc(t("waitlist.emailButton"))}</a></p>`;
+  return {
+    subject,
+    html: layout(input.orgName, input.orgLogoUrl, body),
+    text: [
+      t("ticket.waitlistedTitle"),
+      input.registrantName,
+      t("waitlist.emailText"),
+      "",
+      input.eventTitle,
+      when,
+      input.venue ?? "",
+      "",
+      `${t("waitlist.emailButton")}: ${input.ticketUrl}`,
+    ].join("\n"),
+  };
+}
+
 // Bagian detail tiket (acara, jadwal, lokasi, QR, tombol) yang dipakai bersama
 // oleh email tiket dan email pengingat.
 function ticketDetailsHtml(input: TicketEmailInput): string {

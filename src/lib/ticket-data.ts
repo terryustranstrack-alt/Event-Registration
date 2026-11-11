@@ -10,7 +10,7 @@ export interface TicketView {
     full_name: string;
     email: string;
     language: Locale;
-    status: "registered" | "cancelled";
+    status: "registered" | "cancelled" | "waitlisted";
     ticket_code: string;
     checked_in_at: string | null;
     email_status: string;

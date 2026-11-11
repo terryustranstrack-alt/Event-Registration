@@ -4,7 +4,7 @@ import type { Locale } from "@/lib/i18n/translate";
 
 export type OrgRole = "admin" | "staff";
 export type EventStatus = "draft" | "published" | "closed";
-export type RegistrationStatus = "registered" | "cancelled";
+export type RegistrationStatus = "registered" | "cancelled" | "waitlisted";
 export type DeliveryStatus = "pending" | "sent" | "failed";
 export type FormFieldType =
   | "short_text"
@@ -74,6 +74,7 @@ export interface EventRow {
   registration_closes_at: string | null;
   status: EventStatus;
   allow_multiple_per_email: boolean;
+  waitlist_enabled: boolean;
   consent_enabled: boolean;
   retention_months: number;
   created_at: string;

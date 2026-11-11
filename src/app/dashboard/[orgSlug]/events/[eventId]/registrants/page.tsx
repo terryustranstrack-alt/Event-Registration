@@ -32,7 +32,7 @@ export default async function RegistrantsPage({ params, searchParams }: PageProp
     const safe = q.replace(/[%,()]/g, " ");
     query = query.or(`full_name.ilike.%${safe}%,email.ilike.%${safe}%`);
   }
-  if (status === "registered" || status === "cancelled") query = query.eq("status", status);
+  if (status === "registered" || status === "cancelled" || status === "waitlisted") query = query.eq("status", status);
   if (checked === "yes") query = query.not("checked_in_at", "is", null);
   if (checked === "no") query = query.is("checked_in_at", null);
   const { data, count } = await query;
@@ -56,6 +56,7 @@ export default async function RegistrantsPage({ params, searchParams }: PageProp
           <select name="status" defaultValue={status} aria-label={t("reg.table.status")} className="input w-auto">
             <option value="all">{t("reg.filter.all")}</option>
             <option value="registered">{t("reg.status.registered")}</option>
+            <option value="waitlisted">{t("reg.status.waitlisted")}</option>
             <option value="cancelled">{t("reg.status.cancelled")}</option>
           </select>
           <select name="checked" defaultValue={checked} aria-label={t("reg.table.checkedIn")} className="input w-auto">
@@ -96,7 +97,7 @@ export default async function RegistrantsPage({ params, searchParams }: PageProp
                     <p className="text-xs text-ink-700/75">{r.email}</p>
                   </td>
                   <td className="px-4 py-3">
-                    <span className={`badge ${r.status === "registered" ? "bg-brand-50 text-brand-700" : "bg-red-100 text-red-800"}`}>
+                    <span className={`badge ${r.status === "registered" ? "bg-brand-50 text-brand-700" : r.status === "waitlisted" ? "bg-amber-100 text-amber-900" : "bg-red-100 text-red-800"}`}>
                       {t(`reg.status.${r.status}`)}
                     </span>
                   </td>

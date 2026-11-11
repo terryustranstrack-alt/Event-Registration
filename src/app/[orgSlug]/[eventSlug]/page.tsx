@@ -143,6 +143,7 @@ export default async function PublicEventPage({ params }: PageProps<"/[orgSlug]/
             opensAt={event.registration_opens_at}
             timezone={event.timezone}
             turnstileSiteKey={publicEnv.turnstileSiteKey}
+            waitlistEnabled={event.waitlist_enabled}
           />
         </div>
       </main>

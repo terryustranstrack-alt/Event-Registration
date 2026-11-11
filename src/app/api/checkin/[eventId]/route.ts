@@ -13,7 +13,7 @@ const bodySchema = z.union([itemSchema, z.object({ items: z.array(itemSchema).ma
 
 export interface CheckInResult {
   code: string;
-  result: "valid" | "already_checked_in" | "cancelled" | "wrong_event" | "not_found" | "invalid";
+  result: "valid" | "already_checked_in" | "cancelled" | "waitlisted" | "wrong_event" | "not_found" | "invalid";
   fullName?: string | null;
   checkedInAt?: string | null;
   checkedInBy?: string | null;

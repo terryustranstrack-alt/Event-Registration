@@ -7,7 +7,8 @@ import { publicEnv } from "@/lib/env";
 export async function GET(_request: NextRequest, ctx: RouteContext<"/api/tickets/[ticketCode]/calendar">) {
   const { ticketCode } = await ctx.params;
   const ticket = await getTicketByCode(ticketCode);
-  if (!ticket) return new NextResponse("Not found", { status: 404 });
+  // Orang di daftar tunggu belum punya kursi, jadi belum boleh dapat link online di file kalender.
+  if (!ticket || ticket.registration.status === "waitlisted") return new NextResponse("Not found", { status: 404 });
   const { event, registration } = ticket;
   const ics = buildIcsFile({
     uid: `${registration.id}@racik-eventmu`,

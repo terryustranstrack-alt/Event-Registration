@@ -45,7 +45,9 @@ export function RegistrantRowActions({
     );
   }
 
-  if (registration.status !== "registered") return null;
+  // Yang di daftar tunggu tetap bisa diedit atau dikeluarkan, tapi belum punya tiket untuk dikirim ulang.
+  if (registration.status === "cancelled") return null;
+  const hasTicket = registration.status === "registered";
   // A compact "Actions" menu keeps each table row one line tall.
   const menuItem = "block w-full rounded-lg px-3 py-2 text-left text-sm font-semibold hover:bg-brand-50";
   return (
@@ -55,10 +57,12 @@ export function RegistrantRowActions({
       </summary>
       <div className="absolute right-0 z-20 mt-1 w-56 space-y-0.5 rounded-xl bg-white p-1.5 shadow-xl ring-1 ring-brand-100">
         <button type="button" className={`${menuItem} text-ink-800`} onClick={() => setEditing(true)}>{t("reg.edit")}</button>
-        <form action={resendTicketAction}>
-          {hidden}
-          <SubmitButton className={`${menuItem} text-ink-800`}>{t("reg.resend")}</SubmitButton>
-        </form>
+        {hasTicket && (
+          <form action={resendTicketAction}>
+            {hidden}
+            <SubmitButton className={`${menuItem} text-ink-800`}>{t("reg.resend")}</SubmitButton>
+          </form>
+        )}
         {registration.checked_in_at && (
           <form action={undoCheckInAction}>
             {hidden}
@@ -68,11 +72,11 @@ export function RegistrantRowActions({
         <form
           action={cancelRegistrationAction}
           onSubmit={(e) => {
-            if (!confirm(t("reg.confirmCancel"))) e.preventDefault();
+            if (!confirm(t(hasTicket ? "reg.confirmCancel" : "reg.confirmRemoveWaitlist"))) e.preventDefault();
           }}
         >
           {hidden}
-          <SubmitButton className={`${menuItem} text-red-700 hover:bg-red-50`}>{t("reg.cancel")}</SubmitButton>
+          <SubmitButton className={`${menuItem} text-red-700 hover:bg-red-50`}>{t(hasTicket ? "reg.cancel" : "reg.removeWaitlist")}</SubmitButton>
         </form>
       </div>
     </details>

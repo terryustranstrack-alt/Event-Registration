@@ -405,6 +405,20 @@ export const dictionaryEn = {
   "privacy.rightsText": "You can ask us for a copy of your data, ask us to correct it, or ask us to delete it by emailing {email}. If you registered for an event, you can also contact the event organizer directly.",
   "privacy.contactTitle": "Contact",
   "privacy.contactText": "Questions about this policy or your data: {email}",
+  "event.waitlist": "Open a waitlist when the event is full",
+  "event.waitlistHelp": "People can still sign up when all seats are taken. When a seat frees up (you cancel someone or raise the capacity), the first person in line gets it and receives their ticket by email automatically.",
+  "public.waitlistTitle": "Join the waitlist",
+  "public.waitlistText": "This event is full. Join the waitlist: if a seat opens up, you'll get your ticket by email automatically, first come first served.",
+  "public.joinWaitlist": "Join the waitlist",
+  "ticket.waitlistedTitle": "You're on the waitlist",
+  "ticket.waitlistedText": "This event is full right now. If a seat opens up, we'll email your ticket to {email} automatically.",
+  "checkin.result.waitlisted": "On the waitlist, no seat yet",
+  "reg.status.waitlisted": "Waitlist",
+  "reg.removeWaitlist": "Remove from waitlist",
+  "reg.confirmRemoveWaitlist": "Remove this person from the waitlist?",
+  "waitlist.emailSubject": "You're on the waitlist: {title}",
+  "waitlist.emailText": "The event is full right now. If a seat opens up, you'll get your ticket by email automatically. You don't need to do anything else.",
+  "waitlist.emailButton": "View your registration",
 } as const;
 
 export type DictionaryKey = keyof typeof dictionaryEn;

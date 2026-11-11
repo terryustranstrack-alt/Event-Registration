@@ -7,6 +7,7 @@ import { pickLocalized } from "@/lib/i18n/translate";
 import { answerSummaries, checkInsPer15Minutes, registrationsPerDay } from "@/lib/event-report";
 import { BarChart } from "@/components/bar-chart";
 import { AutoRefresh } from "@/components/auto-refresh";
+import type { RegistrationStatus } from "@/lib/domain-types";
 
 /** Per-event dashboard (FR-9.1 – FR-9.3). */
 export default async function EventReportPage({ params }: PageProps<"/dashboard/[orgSlug]/events/[eventId]/report">) {
@@ -17,7 +18,7 @@ export default async function EventReportPage({ params }: PageProps<"/dashboard/
   const [stats, fields] = await Promise.all([getEventStats(event.id), getEventFormFields(event.id)]);
 
   const supabase = await createSupabaseServerClient();
-  const rows: { status: "registered" | "cancelled"; created_at: string; checked_in_at: string | null; answers: Record<string, unknown> }[] = [];
+  const rows: { status: RegistrationStatus; created_at: string; checked_in_at: string | null; answers: Record<string, unknown> }[] = [];
   for (let from = 0; ; from += 1000) {
     const { data } = await supabase
       .from("registrations")

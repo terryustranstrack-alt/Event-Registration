@@ -28,7 +28,10 @@ export default async function TicketPage({ params, searchParams }: PageProps<"/t
   const title = pickLocalized(locale, event.title_en, event.title_id);
   const venue = [event.venue_name, event.venue_address].filter(Boolean).join(", ");
   const cancelled = registration.status === "cancelled";
-  const qrSvg = cancelled ? "" : await qrCodeSvg(registration.ticket_code);
+  // Di daftar tunggu: belum punya kursi, jadi QR dan tombol-tombol tiket belum ditampilkan.
+  const waitlisted = registration.status === "waitlisted";
+  const hasValidTicket = !cancelled && !waitlisted;
+  const qrSvg = hasValidTicket ? await qrCodeSvg(registration.ticket_code) : "";
   const ticketUrl = `${publicEnv.siteUrl}/t/${registration.ticket_code}`;
   const calendarInput = {
     uid: registration.id,
@@ -53,7 +56,7 @@ export default async function TicketPage({ params, searchParams }: PageProps<"/t
       <div aria-hidden="true" className="absolute inset-0 bg-ink-900/55" />
       <PublicPageHeader orgName={org.name} logoUrl={org.logo_url} locale={locale} t={t} />
       <main className="relative mx-auto w-full max-w-md flex-1 px-4 pb-12 pt-4">
-        {isNew === "1" && !cancelled && (
+        {isNew === "1" && hasValidTicket && (
           <div role="status" className="mb-5 rounded-2xl bg-white/15 p-4 text-white ring-1 ring-white/25 backdrop-blur">
             <p className="text-xl font-extrabold">🎉 {t("ticket.thanks")}</p>
             <p className="text-sm text-white/90">{t("ticket.emailSent", { email: registration.email })}</p>
@@ -84,7 +87,12 @@ export default async function TicketPage({ params, searchParams }: PageProps<"/t
             <span aria-hidden="true" className="absolute -right-4 -top-4 h-8 w-8 rounded-full bg-ink-800" />
           </div>
           <div className="space-y-5 p-6">
-            {cancelled ? (
+            {waitlisted ? (
+              <div role="status" className="rounded-xl bg-amber-50 p-4 text-center text-amber-900">
+                <p className="text-lg font-extrabold">{t("ticket.waitlistedTitle")}</p>
+                <p className="mt-1 text-sm">{t("ticket.waitlistedText", { email: registration.email })}</p>
+              </div>
+            ) : cancelled ? (
               <p role="alert" className="rounded-xl bg-red-50 p-4 text-center font-bold text-red-800">{t("ticket.cancelled")}</p>
             ) : (
               <figure className="text-center">
@@ -112,7 +120,7 @@ export default async function TicketPage({ params, searchParams }: PageProps<"/t
                 <dd className="break-all font-mono text-xs text-ink-700">{registration.ticket_code}</dd>
               </div>
             </dl>
-            {!cancelled && (
+            {hasValidTicket && (
               <div className="flex flex-col gap-2">
                 {event.online_url && (
                   <a href={event.online_url} target="_blank" rel="noreferrer" className="btn-primary py-3">

@@ -3,7 +3,7 @@ import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role-cli
 import { publicEnv } from "@/lib/env";
 import { pickLocalized, getTranslator, type Locale } from "@/lib/i18n/translate";
 import { sendEmail } from "@/lib/email";
-import { invitationEmail, reminderEmail, ticketEmail, type TicketEmailInput } from "./email-templates";
+import { invitationEmail, reminderEmail, ticketEmail, waitlistEmail, type TicketEmailInput } from "./email-templates";
 
 const MAX_ATTEMPTS = 5;
 
@@ -28,7 +28,7 @@ async function deliver(to: string, content: { subject: string; html: string }): 
 
 interface EmailJob {
   id: string;
-  kind: "ticket" | "invitation" | "reminder";
+  kind: "ticket" | "invitation" | "reminder" | "waitlist";
   registration_id: string | null;
   invitation_id: string | null;
   attempts: number;
@@ -64,6 +64,7 @@ export async function processEmailQueue(options: { limit?: number; onlyJobId?: s
 function sendJob(job: EmailJob): Promise<SendResult> {
   if (job.kind === "ticket") return sendTicketJob(job);
   if (job.kind === "reminder") return sendReminderJob(job);
+  if (job.kind === "waitlist") return sendWaitlistJob(job);
   return sendInvitationJob(job);
 }
 
@@ -109,6 +110,7 @@ async function recordResult(job: EmailJob, result: SendResult) {
 interface TicketEmailData {
   email: string;
   checkedIn: boolean;
+  status: string;
   input: TicketEmailInput;
 }
 
@@ -147,6 +149,7 @@ async function loadTicketEmailData(registrationId: string): Promise<TicketEmailD
   return {
     email: reg.email,
     checkedIn: reg.checked_in_at !== null,
+    status: reg.status,
     input: {
       locale,
       orgName: org.name,
@@ -176,7 +179,20 @@ function isLoadFailure(value: TicketEmailData | SendResult): value is SendResult
 async function sendTicketJob(job: EmailJob): Promise<SendResult> {
   const data = await loadTicketEmailData(job.registration_id!);
   if (isLoadFailure(data)) return data;
+  // Tiket (QR + link online) hanya untuk yang sudah punya kursi.
+  if (data.status === "waitlisted") return { ok: false, error: "still on the waitlist", retryable: false };
   return deliver(data.email, ticketEmail(data.input));
+}
+
+/**
+ * Kirim email konfirmasi daftar tunggu. Dilewati kalau orangnya keburu dapat
+ * kursi (tiketnya sudah dikirim terpisah) atau sudah dikeluarkan dari antrean.
+ */
+async function sendWaitlistJob(job: EmailJob): Promise<SendResult> {
+  const data = await loadTicketEmailData(job.registration_id!);
+  if (isLoadFailure(data)) return data;
+  if (data.status !== "waitlisted") return { ok: false, error: "no longer on the waitlist", retryable: false };
+  return deliver(data.email, waitlistEmail(data.input));
 }
 
 /**

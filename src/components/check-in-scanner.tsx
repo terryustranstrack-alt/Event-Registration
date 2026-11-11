@@ -9,7 +9,7 @@ interface Guest {
   ticket_code: string;
   full_name: string;
   email: string;
-  status: "registered" | "cancelled";
+  status: "registered" | "cancelled" | "waitlisted";
   checked_in_at: string | null;
 }
 
@@ -19,7 +19,7 @@ interface QueuedCheckIn {
   at: string;
 }
 
-type ResultKind = "valid" | "already_checked_in" | "cancelled" | "wrong_event" | "not_found" | "invalid";
+type ResultKind = "valid" | "already_checked_in" | "cancelled" | "waitlisted" | "wrong_event" | "not_found" | "invalid";
 interface ScanResult {
   kind: ResultKind;
   name?: string | null;
@@ -167,6 +167,8 @@ export function CheckInScanner({
     const guest = guestByCode.get(code);
     if (!guest) return { kind: "not_found", offline: true };
     if (guest.status === "cancelled") return { kind: "cancelled", name: guest.full_name, offline: true };
+    // Orang di daftar tunggu belum punya kursi, jadi tidak boleh masuk.
+    if (guest.status === "waitlisted") return { kind: "waitlisted", name: guest.full_name, offline: true };
     if (guest.checked_in_at) return { kind: "already_checked_in", name: guest.full_name, at: guest.checked_in_at, offline: true };
     const at = new Date().toISOString();
     const next = [...readStorage<QueuedCheckIn[]>(storageKey(eventId, "queue"), []), { code, method, at }];
@@ -265,6 +267,7 @@ export function CheckInScanner({
     valid: "bg-green-600 text-white",
     already_checked_in: "bg-amber-400 text-amber-950",
     cancelled: "bg-red-600 text-white",
+    waitlisted: "bg-red-600 text-white",
     wrong_event: "bg-red-600 text-white",
     not_found: "bg-red-600 text-white",
     invalid: "bg-red-600 text-white",
@@ -358,8 +361,8 @@ export function CheckInScanner({
                     <p className="truncate font-semibold">{g.full_name}</p>
                     <p className="truncate text-xs text-white/65">{g.email}</p>
                   </div>
-                  {g.status === "cancelled" ? (
-                    <span className="badge bg-red-900 text-red-100">{t("reg.status.cancelled")}</span>
+                  {g.status !== "registered" ? (
+                    <span className="badge bg-red-900 text-red-100">{t(`reg.status.${g.status}`)}</span>
                   ) : g.checked_in_at ? (
                     <span className="badge bg-amber-300 text-amber-950">✓ {formatTime(g.checked_in_at, locale, timezone)}</span>
                   ) : (
