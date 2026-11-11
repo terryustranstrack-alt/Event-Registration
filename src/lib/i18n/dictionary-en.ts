@@ -222,6 +222,14 @@ export const dictionaryEn = {
   "error.generic": "Something went wrong. Please try again.",
   "error.fixBelow": "Please fix the highlighted fields.",
 
+  "errorPage.title": "Something went wrong",
+  "errorPage.text": "This page couldn't load. It may be a temporary problem — please try again.",
+  "errorPage.retry": "Try again",
+  "errorPage.home": "Back to home",
+  "notFoundPage.title": "Page not found",
+  "notFoundPage.text": "The link may be wrong, or the page has been moved or removed.",
+  "loading.label": "Loading…",
+
   "ticket.title": "Your ticket",
   "ticket.thanks": "You're registered!",
   "ticket.emailSent": "We've emailed this ticket to {email}.",

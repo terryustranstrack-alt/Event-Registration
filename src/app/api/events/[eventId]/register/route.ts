@@ -8,6 +8,7 @@ import { serverEnv } from "@/lib/env";
 import { verifyTurnstileToken } from "@/lib/turnstile-verification";
 import { getClientIp, hashForRateLimit } from "@/lib/request-client-info";
 import { processEmailQueue } from "@/lib/messaging/email-queue-worker";
+import { fileContentMatchesType } from "@/lib/upload-file-signature";
 import { isLocale } from "@/lib/i18n/translate";
 import {
   isFileLike,
@@ -55,8 +56,9 @@ export async function POST(request: NextRequest, ctx: RouteContext<"/api/events/
 
   const fullName = String(formData.get("full_name") ?? "").trim();
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
-  const languageRaw = String(formData.get("language") ?? "id");
-  const language = isLocale(languageRaw) ? languageRaw : "id";
+  // Kalau formulir tidak menyebut bahasa, pakai Inggris — sama dengan bahasa bawaan situs.
+  const languageRaw = String(formData.get("language") ?? "en");
+  const language = isLocale(languageRaw) ? languageRaw : "en";
   const consent = formData.get("consent") === "on";
 
   const values: Record<string, RawValue> = {};
@@ -78,6 +80,12 @@ export async function POST(request: NextRequest, ctx: RouteContext<"/api/events/
     return NextResponse.json({ error: "validation", fieldErrors }, { status: 422 });
   }
   const { cleaned } = validateCustomFields(fields, values);
+
+  // Tolak file yang isinya tidak sesuai jenis yang diakui (mis. program yang diganti nama jadi .jpg).
+  const fakeFileErrors = await findFilesWithWrongContent(cleaned);
+  if (Object.keys(fakeFileErrors).length > 0) {
+    return NextResponse.json({ error: "validation", fieldErrors: fakeFileErrors }, { status: 422 });
+  }
 
   // Upload files to the private bucket; answers store only the storage path.
   const uploadedPaths: string[] = [];
@@ -133,6 +141,17 @@ export async function POST(request: NextRequest, ctx: RouteContext<"/api/events/
   });
 
   return NextResponse.json({ ticketCode }, { status: 201 });
+}
+
+/** Daftar kolom unggahan yang isi filenya tidak cocok dengan jenis file yang diakui. */
+async function findFilesWithWrongContent(cleaned: Record<string, unknown>): Promise<Record<string, FieldError>> {
+  const errors: Record<string, FieldError> = {};
+  for (const [fieldId, value] of Object.entries(cleaned)) {
+    if (value instanceof File && !(await fileContentMatchesType(value))) {
+      errors[fieldId] = { key: "error.file" };
+    }
+  }
+  return errors;
 }
 
 async function removeUploads(paths: string[]) {
