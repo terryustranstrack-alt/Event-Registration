@@ -20,3 +20,13 @@ export function slugify(text: string, maxLength = 50): string {
 export function isValidOrgSlug(slug: string): boolean {
   return ORG_SLUG_RE.test(slug) && !RESERVED_ORG_SLUGS.has(slug);
 }
+
+/**
+ * Alamat (slug) untuk salinan acara: "nama-copy", lalu "nama-copy-2",
+ * "nama-copy-3", dst. Dipotong supaya tetap muat batas 80 karakter.
+ */
+export function copySlugCandidate(slug: string, attempt: number): string {
+  const suffix = attempt <= 1 ? "-copy" : `-copy-${attempt}`;
+  const base = slug.slice(0, 80 - suffix.length).replace(/-+$/g, "");
+  return `${base}${suffix}`;
+}

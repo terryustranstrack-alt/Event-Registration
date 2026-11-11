@@ -6,8 +6,10 @@ import { formatEventRange } from "@/lib/i18n/format";
 import { pickLocalized } from "@/lib/i18n/translate";
 import { EventStatusBadge } from "@/components/event-status-badge";
 import { EventTabs } from "@/components/event-tabs";
-import { ArrowLeftIcon, CalendarIcon, ExternalIcon, ScanIcon } from "@/components/icons";
-import { deleteDraftEventAction, setEventStatusAction } from "@/app/actions/event-actions";
+import { ArrowLeftIcon, CalendarIcon, CopyIcon, ExternalIcon, ScanIcon } from "@/components/icons";
+import { SubmitButton } from "@/components/submit-button";
+import { DeleteEventButton } from "@/components/delete-event-button";
+import { duplicateEventAction, setEventStatusAction } from "@/app/actions/event-actions";
 
 export default async function EventLayout({ children, params }: LayoutProps<"/dashboard/[orgSlug]/events/[eventId]">) {
   const { orgSlug, eventId } = await params;
@@ -60,12 +62,25 @@ export default async function EventLayout({ children, params }: LayoutProps<"/da
             {isAdmin && event.status === "draft" && statusButton("published", t("event.publish"), "btn btn-sm bg-white text-brand-700 hover:bg-brand-50")}
             {isAdmin && event.status === "published" && statusButton("closed", t("event.close"), "btn btn-sm bg-white/15 text-white backdrop-blur hover:bg-white/25")}
             {isAdmin && event.status === "closed" && statusButton("published", t("event.reopen"), "btn btn-sm bg-white text-brand-700 hover:bg-brand-50")}
-            {isAdmin && event.status === "draft" && (
-              <form action={deleteDraftEventAction}>
+            {/* Duplikat: salin acara ini (detail, gambar, pertanyaan formulir) jadi draf baru. */}
+            {isAdmin && (
+              <form action={duplicateEventAction}>
                 <input type="hidden" name="org_slug" value={org.slug} />
                 <input type="hidden" name="event_id" value={event.id} />
-                <button className="btn btn-sm text-white/85 hover:bg-red-600/80 hover:text-white">{t("event.delete")}</button>
+                <SubmitButton className="btn btn-sm bg-white/15 text-white backdrop-blur hover:bg-white/25" pendingLabel={t("common.loading")}>
+                  <CopyIcon size={15} /> {t("event.duplicate")}
+                </SubmitButton>
               </form>
+            )}
+            {/* Hapus acara (status apa pun), selalu lewat konfirmasi dua langkah. */}
+            {isAdmin && (
+              <DeleteEventButton
+                orgSlug={org.slug}
+                eventId={event.id}
+                eventTitle={pickLocalized(locale, event.title_en, event.title_id)}
+                registrations={event.seats_taken}
+                locale={locale}
+              />
             )}
           </div>
         </div>

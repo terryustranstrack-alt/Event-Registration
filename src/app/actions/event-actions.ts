@@ -3,10 +3,13 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { createSupabaseServerClient } from "@/lib/supabase/server-client";
+import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role-client";
 import { requireOrgMembership } from "@/lib/auth-guards";
-import { EVENT_SLUG_RE, slugify } from "@/lib/slug-utils";
+import { copySlugCandidate, EVENT_SLUG_RE, slugify } from "@/lib/slug-utils";
+import { getOrgEvent } from "@/lib/event-data";
+import { EVENT_DELETE_CONFIRM_WORD } from "@/lib/event-delete";
 import { isValidTimeZone, zonedLocalToUtcIso } from "@/lib/timezone-utils";
-import { FORM_FIELD_TYPES, type EventStatus } from "@/lib/domain-types";
+import { FORM_FIELD_TYPES, type EventRow, type EventStatus } from "@/lib/domain-types";
 import { uploadOrgImage, type FormState } from "./organization-actions";
 
 // Gambar acara yang bisa diunggah dari editor: kolom di database, nama input
@@ -181,12 +184,38 @@ export async function setEventStatusAction(formData: FormData) {
   revalidatePath(`/dashboard/${org.slug}`, "layout");
 }
 
-export async function deleteDraftEventAction(formData: FormData) {
+/**
+ * Hapus file yang diunggah pendaftar untuk acara ini (folder {org}/{acara}/).
+ * Datanya pribadi, jadi jangan ditinggal setelah acaranya dihapus.
+ */
+async function removeRegistrationUploads(orgId: string, eventId: string) {
+  const storage = createSupabaseServiceRoleClient().storage.from("registration-uploads");
+  const folder = `${orgId}/${eventId}`;
+  // Dihapus per 1.000 file; dibatasi 50 putaran supaya tidak pernah macet berulang tanpa akhir.
+  for (let round = 0; round < 50; round++) {
+    const { data: files } = await storage.list(folder, { limit: 1000 });
+    if (!files || files.length === 0) return;
+    const { error } = await storage.remove(files.map((f) => `${folder}/${f.name}`));
+    if (error) return;
+  }
+}
+
+/**
+ * Hapus acara beserta semua pendaftar, check-in, dan file unggahannya.
+ * Hanya jalan kalau admin sudah mengetik kata konfirmasi (langkah kedua).
+ */
+export async function deleteEventAction(formData: FormData) {
   const orgSlug = String(formData.get("org_slug"));
   const eventId = String(formData.get("event_id"));
   const { org } = await requireOrgMembership(orgSlug, ["admin"]);
+  if (String(formData.get("confirm") ?? "").trim() !== EVENT_DELETE_CONFIRM_WORD) {
+    redirect(`/dashboard/${org.slug}/events/${eventId}`);
+  }
+
   const supabase = await createSupabaseServerClient();
-  await supabase.from("events").delete().eq("id", eventId).eq("org_id", org.id).eq("status", "draft");
+  const { data: deleted } = await supabase.from("events").delete().eq("id", eventId).eq("org_id", org.id).select("id");
+  if (deleted && deleted.length > 0) await removeRegistrationUploads(org.id, eventId);
+  revalidatePath(`/dashboard/${org.slug}`);
   redirect(`/dashboard/${org.slug}`);
 }
 
@@ -260,4 +289,84 @@ export async function saveFormFieldsAction(input: {
   }
   revalidatePath(`/dashboard/${org.slug}/events/${event.id}`, "layout");
   return { ok: true };
+}
+
+// ---------------------------------------------------------------------------
+// Duplikat acara
+// ---------------------------------------------------------------------------
+type ServerSupabase = Awaited<ReturnType<typeof createSupabaseServerClient>>;
+
+/**
+ * Isi acara baru dari acara lama: semua detail & gambar ikut, tapi statusnya
+ * draf, kursi terisi 0, dan judulnya diberi tanda "(copy)" supaya tidak tertukar.
+ */
+function buildEventCopy(event: EventRow, userId: string) {
+  return {
+    org_id: event.org_id,
+    title_en: event.title_en ? `${event.title_en} (copy)` : null,
+    title_id: event.title_id ? `${event.title_id} (salinan)` : null,
+    description_en: event.description_en,
+    description_id: event.description_id,
+    banner_url: event.banner_url,
+    about_image_url: event.about_image_url,
+    starts_at: event.starts_at,
+    ends_at: event.ends_at,
+    timezone: event.timezone,
+    venue_name: event.venue_name,
+    venue_address: event.venue_address,
+    maps_url: event.maps_url,
+    online_url: event.online_url,
+    extra_links: event.extra_links,
+    capacity: event.capacity,
+    hide_capacity_total: event.hide_capacity_total,
+    registration_opens_at: event.registration_opens_at,
+    registration_closes_at: event.registration_closes_at,
+    allow_multiple_per_email: event.allow_multiple_per_email,
+    consent_enabled: event.consent_enabled,
+    retention_months: event.retention_months,
+    status: "draft" as const,
+    created_by: userId,
+  };
+}
+
+/** Simpan salinan acara. Kalau alamatnya sudah dipakai, coba "-copy-2", "-copy-3", dst. */
+async function insertEventCopy(supabase: ServerSupabase, copy: ReturnType<typeof buildEventCopy>, slug: string) {
+  for (let attempt = 1; attempt <= 20; attempt++) {
+    const { data, error } = await supabase
+      .from("events")
+      .insert({ ...copy, slug: copySlugCandidate(slug, attempt) })
+      .select("id")
+      .single();
+    if (data) return data.id as string;
+    if (error?.code !== "23505") return null;
+  }
+  return null;
+}
+
+/** Salin pertanyaan formulir yang masih aktif ke acara baru (dengan ID baru). */
+async function copyFormFields(supabase: ServerSupabase, fromEventId: string, toEventId: string) {
+  const { data: fields } = await supabase
+    .from("form_fields")
+    .select("org_id, position, type, label_en, label_id, help_en, help_id, placeholder_en, placeholder_id, required, min_value, max_value, options")
+    .eq("event_id", fromEventId)
+    .is("archived_at", null)
+    .order("position");
+  if (!fields || fields.length === 0) return;
+  await supabase.from("form_fields").insert(fields.map((f) => ({ ...f, event_id: toEventId })));
+}
+
+/** Tombol "Duplikat": buat salinan acara sebagai draf, lalu buka halaman editnya. */
+export async function duplicateEventAction(formData: FormData) {
+  const orgSlug = String(formData.get("org_slug"));
+  const eventId = String(formData.get("event_id"));
+  const { org, user } = await requireOrgMembership(orgSlug, ["admin"]);
+  const event = await getOrgEvent(org.id, eventId);
+
+  const supabase = await createSupabaseServerClient();
+  const newId = await insertEventCopy(supabase, buildEventCopy(event, user.id), event.slug);
+  if (!newId) redirect(`/dashboard/${org.slug}/events/${eventId}`); // jarang terjadi; kembali ke acara asal
+
+  await copyFormFields(supabase, event.id, newId);
+  revalidatePath(`/dashboard/${org.slug}`);
+  redirect(`/dashboard/${org.slug}/events/${newId}`);
 }
