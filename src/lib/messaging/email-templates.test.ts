@@ -42,4 +42,11 @@ describe("ticketEmail", () => {
     expect(subject).toBe("Your ticket: Tech Meetup");
     expect(html).toContain(base.qrImageUrl);
   });
+
+  it("includes a Send ticket to WhatsApp link with the ticket address", () => {
+    const { html, text } = ticketEmail(base);
+    expect(html).toContain("https://wa.me/?text=");
+    expect(html).toContain(encodeURIComponent(base.ticketUrl));
+    expect(text).toContain("Send ticket to WhatsApp");
+  });
 });

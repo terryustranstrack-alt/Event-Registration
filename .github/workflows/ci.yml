@@ -1,0 +1,59 @@
+# Pemeriksaan otomatis setiap ada perubahan yang dikirim ke GitHub.
+# Kalau ada yang gagal, GitHub menandai perubahan itu dengan tanda silang merah
+# sehingga kesalahan ketahuan sebelum (atau segera setelah) situs diperbarui.
+name: Checks
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: checks-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  app:
+    name: Lint, types, tests, build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: npm
+      - run: npm ci
+      - name: Lint (gaya & kesalahan umum kode)
+        run: npm run lint
+      - name: Type check (kecocokan tipe data)
+        run: npm run typecheck
+      - name: Unit tests
+        run: npm test
+      - name: Build (situs bisa dirakit seperti di Vercel)
+        run: npm run build
+
+  database:
+    name: Database tests
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGHOST: localhost
+      PGUSER: postgres
+      PGPASSWORD: postgres
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Postgres tools
+        run: sudo apt-get update -q && sudo apt-get install -y -q postgresql-client
+      # Menjalankan semua migrasi di database kosong + uji aturan database
+      # (termasuk uji 200 pendaftar sekaligus untuk 50 kursi).
+      - run: bash supabase/tests/run-database-tests.sh

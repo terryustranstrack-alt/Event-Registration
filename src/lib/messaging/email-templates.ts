@@ -1,5 +1,6 @@
 import { getTranslator, type Locale } from "@/lib/i18n/translate";
 import { formatEventRange } from "@/lib/i18n/format";
+import { whatsAppShareUrl, whatsAppTicketMessage } from "@/lib/whatsapp-share";
 
 function esc(text: string): string {
   return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
@@ -76,7 +77,16 @@ ${input.onlineUrl ? `<p style="margin:0 0 4px">💻 <a href="${esc(input.onlineU
 <p style="font-size:13px;color:#52525b;margin:8px 0 0">${esc(t("ticket.show"))}</p>
 <p style="font-family:monospace;font-size:11px;color:#71717a;word-break:break-all">${esc(input.ticketCode)}</p>
 </div>
-<p style="text-align:center"><a href="${esc(input.ticketUrl)}" style="display:inline-block;background:#4f46e5;color:#ffffff;text-decoration:none;padding:12px 20px;border-radius:8px;font-weight:bold">${esc(t("ticket.open"))}</a></p>`;
+<p style="text-align:center"><a href="${esc(input.ticketUrl)}" style="display:inline-block;background:#4f46e5;color:#ffffff;text-decoration:none;padding:12px 20px;border-radius:8px;font-weight:bold">${esc(t("ticket.open"))}</a></p>
+<p style="text-align:center"><a href="${esc(ticketWhatsAppUrl(input))}" style="display:inline-block;background:#25d366;color:#ffffff;text-decoration:none;padding:12px 20px;border-radius:8px;font-weight:bold">${esc(t("ticket.whatsapp"))}</a></p>`;
+}
+
+// Link "Kirim tiket ke WhatsApp" — pesannya sama dengan tombol di halaman tiket.
+function ticketWhatsAppUrl(input: TicketEmailInput): string {
+  const when = formatEventRange(input.startsAt, input.endsAt, input.locale, input.timezone);
+  return whatsAppShareUrl(
+    whatsAppTicketMessage({ title: input.eventTitle, when, venue: input.venue ?? undefined, ticketUrl: input.ticketUrl }),
+  );
 }
 
 // Versi teks biasa dari detail tiket, untuk aplikasi email yang tidak menampilkan HTML.
@@ -90,6 +100,7 @@ function ticketDetailsText(input: TicketEmailInput): string {
     input.onlineUrl ? `${t("ticket.joinOnline")}: ${input.onlineUrl}` : "",
     "",
     `${t("ticket.open")}: ${input.ticketUrl}`,
+    `${t("ticket.whatsapp")}: ${ticketWhatsAppUrl(input)}`,
     `${t("ticket.code")}: ${input.ticketCode}`,
   ]
     .filter((l) => l !== null)
