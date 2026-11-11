@@ -36,9 +36,6 @@ export function serverEnv() {
     // Legacy service_role key, or the newer secret key (sb_secret_…).
     supabaseServiceRoleKey: required("SUPABASE_SERVICE_ROLE_KEY", "SUPABASE_SECRET_KEY"),
     ticketSigningSecret: required("TICKET_SIGNING_SECRET"),
-    brevoApiKey: process.env.BREVO_API_KEY ?? "",
-    emailFromAddress: process.env.EMAIL_FROM_ADDRESS ?? "tickets@tickets.racikdigital.com",
-    emailFromName: process.env.EMAIL_FROM_NAME ?? "Racik EventMu",
     turnstileSecretKey: process.env.TURNSTILE_SECRET_KEY ?? "",
     cronSecret: process.env.CRON_SECRET ?? "",
   };

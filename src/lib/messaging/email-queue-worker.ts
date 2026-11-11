@@ -2,12 +2,29 @@ import "server-only";
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/service-role-client";
 import { publicEnv } from "@/lib/env";
 import { pickLocalized, getTranslator, type Locale } from "@/lib/i18n/translate";
-import { buildIcsFile } from "@/lib/calendar-invite";
-import { qrCodePngBuffer } from "@/lib/qr-code-image";
-import { sendEmail, type SendResult } from "./email-provider";
+import { sendEmail } from "@/lib/email";
 import { invitationEmail, ticketEmail } from "./email-templates";
 
 const MAX_ATTEMPTS = 5;
+
+// Outcome of one send attempt, used to decide whether to retry later.
+interface SendResult {
+  ok: boolean;
+  messageId?: string;
+  error?: string;
+  retryable?: boolean;
+}
+
+// Sends through the shared SMTP helper. A rejected send is retried later
+// (the mail server may just be busy), so failures are marked retryable.
+async function deliver(to: string, content: { subject: string; html: string }): Promise<SendResult> {
+  try {
+    const { messageId } = await sendEmail(to, content.subject, content.html);
+    return { ok: true, messageId };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : String(err), retryable: true };
+  }
+}
 
 interface EmailJob {
   id: string;
@@ -83,7 +100,7 @@ async function sendTicketJob(job: EmailJob): Promise<SendResult> {
   const { data: reg } = await supabase
     .from("registrations")
     .select(
-      "id, full_name, email, language, ticket_code, status, event:events(id, title_en, title_id, description_en, description_id, starts_at, ends_at, timezone, venue_name, venue_address, maps_url, online_url), org:organizations(name, logo_url, contact_email)",
+      "id, full_name, email, language, ticket_code, status, event:events(id, title_en, title_id, description_en, description_id, starts_at, ends_at, timezone, venue_name, venue_address, maps_url, online_url), org:organizations(name, logo_url)",
     )
     .eq("id", job.registration_id!)
     .single();
@@ -102,7 +119,7 @@ async function sendTicketJob(job: EmailJob): Promise<SendResult> {
     maps_url: string | null;
     online_url: string | null;
   };
-  const org = reg.org as unknown as { name: string; logo_url: string | null; contact_email: string | null };
+  const org = reg.org as unknown as { name: string; logo_url: string | null };
   const locale = reg.language as Locale;
   const title = pickLocalized(locale, event.title_en, event.title_id);
   const site = publicEnv.siteUrl;
@@ -125,25 +142,9 @@ async function sendTicketJob(job: EmailJob): Promise<SendResult> {
     qrImageUrl: `${site}/api/tickets/${reg.ticket_code}/qr-code`,
     ticketCode: reg.ticket_code,
   });
-  const ics = buildIcsFile({
-    uid: `${reg.id}@racik-eventmu`,
-    title,
-    location: event.online_url ?? venue ?? undefined,
-    startsAt: event.starts_at,
-    endsAt: event.ends_at,
-    url: ticketUrl,
-  });
-  const qr = await qrCodePngBuffer(reg.ticket_code);
-
-  return sendEmail({
-    to: { email: reg.email, name: reg.full_name },
-    replyTo: org.contact_email ? { email: org.contact_email, name: org.name } : undefined,
-    ...content,
-    attachments: [
-      { name: "ticket-qr.png", contentBase64: qr.toString("base64") },
-      { name: "event.ics", contentBase64: Buffer.from(ics).toString("base64") },
-    ],
-  });
+  // The QR code appears in the email as an image loaded from the site
+  // (qrImageUrl above), and the "Open web ticket" button links to the full ticket.
+  return deliver(reg.email, content);
 }
 
 async function sendInvitationJob(job: EmailJob): Promise<SendResult> {
@@ -164,5 +165,5 @@ async function sendInvitationJob(job: EmailJob): Promise<SendResult> {
     roleLabel: t(inv.role === "admin" ? "team.role.admin" : "team.role.staff"),
     acceptUrl: `${publicEnv.siteUrl}/invite/${inv.token}`,
   });
-  return sendEmail({ to: { email: inv.email }, ...content });
+  return deliver(inv.email, content);
 }

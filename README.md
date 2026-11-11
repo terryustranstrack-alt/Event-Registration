@@ -10,7 +10,7 @@ This repository implements **v1.0 (free events)** from the PRD — see
 [`context/prd-event-registration-platform.md`](context/prd-event-registration-platform.md).
 
 **Stack:** Next.js 16 (App Router) · Supabase (Postgres + RLS, Auth, Storage) · Tailwind CSS v4 ·
-Brevo (email) · Cloudflare Turnstile · Vercel (hosting + cron).
+SMTP email via Nodemailer · Cloudflare Turnstile · Vercel (hosting + cron).
 
 ## Quick start (local)
 
@@ -21,7 +21,7 @@ cp .env.example .env.local  # fill in the keys printed by `supabase start`
 npm run dev
 ```
 
-Without `BREVO_API_KEY` emails are logged to the console; without Turnstile keys the captcha is
+Emails need the `SMTP_*` and `EMAIL_FROM` settings (test them at `/api/test-email?to=you@example.com`, platform owner only); without Turnstile keys the captcha is
 skipped. Make yourself platform owner:
 
 ```sql
@@ -46,7 +46,7 @@ update profiles set is_platform_owner = true where email = 'you@example.com';
 | FR-3 form builder | `src/components/form-builder.tsx`, `src/components/registration-form-fields.tsx` |
 | FR-4 public page, countdown, live seats | `src/app/[orgSlug]/[eventSlug]`, `src/components/public-registration-panel.tsx` |
 | FR-5 registration + signed tickets | `src/app/api/events/[eventId]/register`, `src/lib/ticket-codes.ts`, `src/app/t/[ticketCode]` |
-| FR-7 email queue (Brevo) | `src/lib/messaging/*`, `src/app/api/cron/process-email-queue` |
+| FR-7 email queue (SMTP) | `src/lib/email.ts`, `src/lib/messaging/*`, `src/app/api/cron/process-email-queue` |
 | FR-8 offline-capable scanner | `src/components/check-in-scanner.tsx`, `src/app/api/checkin/[eventId]` |
 | FR-9 reports + CSV/Excel export | `src/app/dashboard/[orgSlug]/events/[eventId]/{registrants,report}`, `src/app/api/events/[eventId]/export` |
 | FR-10 bilingual | `src/lib/i18n/*` |
@@ -74,7 +74,7 @@ update profiles set is_platform_owner = true where email = 'you@example.com';
    <p><a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=signup&redirect_to={{ .RedirectTo }}">Confirm your email</a></p>
    ```
 3. Set every variable from `.env.example` in Vercel (generate `TICKET_SIGNING_SECRET` and `CRON_SECRET`).
-4. Verify `tickets.racikdigital.com` in Brevo (SPF, DKIM, DMARC).
+4. Set the `SMTP_*` and `EMAIL_FROM` variables, with `tickets.racikdigital.com` verified at your email provider (SPF, DKIM, DMARC).
 5. `vercel.json` runs both cron jobs once a day so it deploys on the Hobby plan (Hobby only allows daily
    crons). Tickets are still sent right after registration, and every registration also retries a few
    pending/failed emails. On Vercel Pro, change the email-queue schedule to `* * * * *` for faster retries.
