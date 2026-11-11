@@ -28,7 +28,11 @@ export function LandingClosing({ t }: { t: Translate }) {
             <Link href="/signup" className="btn-secondary btn-sm">{t("nav.signUp")}</Link>
           </nav>
         </div>
-        <p className="border-t border-brand-50 py-5 text-center text-xs font-semibold text-ink-700/70">© {new Date().getFullYear()} Racik Digital</p>
+        {/* Link Kebijakan Privasi wajib terlihat dari halaman depan (syarat login Google). */}
+        <p className="border-t border-brand-50 py-5 text-center text-xs font-semibold text-ink-700/70">
+          © {new Date().getFullYear()} Racik Digital ·{" "}
+          <Link href="/privacy" className="underline hover:text-ink-900">{t("privacy.link")}</Link>
+        </p>
       </footer>
     </>
   );
