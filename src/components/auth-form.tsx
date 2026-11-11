@@ -23,8 +23,8 @@ export function AuthForm({
   );
 
   return (
-    <div className="card mx-auto w-full max-w-md">
-      <h1 className="mb-6 text-2xl font-bold">{t(mode === "signin" ? "auth.signInTitle" : "auth.signUpTitle")}</h1>
+    <div className="mx-auto w-full max-w-md">
+      <h1 className="mb-6 text-3xl font-extrabold tracking-tight">{t(mode === "signin" ? "auth.signInTitle" : "auth.signUpTitle")}</h1>
       {notice && (
         <p role="alert" className="mb-4 rounded-lg bg-amber-50 p-3 text-sm text-amber-900">
           {notice}
@@ -34,7 +34,9 @@ export function AuthForm({
         <input type="hidden" name="next" value={next ?? ""} />
         <SubmitButton className="btn-secondary w-full">{t("auth.withGoogle")}</SubmitButton>
       </form>
-      <p className="my-4 text-center text-xs uppercase text-zinc-500">{t("auth.or")}</p>
+      <p className="my-5 flex items-center gap-3 text-xs font-bold uppercase text-ink-700/60 before:h-px before:flex-1 before:bg-brand-100 after:h-px after:flex-1 after:bg-brand-100">
+        {t("auth.or")}
+      </p>
       {state.checkEmail ? (
         <p role="status" className="rounded-lg bg-green-50 p-3 text-sm text-green-800">
           {t("auth.checkEmail")}
@@ -74,11 +76,11 @@ export function AuthForm({
           </SubmitButton>
         </form>
       )}
-      <p className="mt-6 text-center text-sm text-zinc-600">
+      <p className="mt-6 text-center text-sm text-ink-700">
         {mode === "signin" ? t("auth.noAccount") : t("auth.haveAccount")}{" "}
         <Link
           href={`${mode === "signin" ? "/signup" : "/login"}${next ? `?next=${encodeURIComponent(next)}` : ""}`}
-          className="font-semibold text-brand-700 underline"
+          className="font-bold text-brand-700 underline"
         >
           {t(mode === "signin" ? "nav.signUp" : "nav.signIn")}
         </Link>

@@ -4,8 +4,8 @@ import { useTransition } from "react";
 import { setLocaleAction } from "@/app/actions/locale-actions";
 import type { Locale } from "@/lib/i18n/translate";
 
-/** EN/ID switch for the header (FR-4.5). */
-export function LanguageSwitcher({ locale, label }: { locale: Locale; label: string }) {
+/** EN/ID switch (FR-4.5). `dark` is for use on dark/colored backgrounds. */
+export function LanguageSwitcher({ locale, label, dark = false }: { locale: Locale; label: string; dark?: boolean }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
 
@@ -18,15 +18,27 @@ export function LanguageSwitcher({ locale, label }: { locale: Locale; label: str
   }
 
   return (
-    <div role="group" aria-label={label} className="inline-flex overflow-hidden rounded-lg border border-zinc-300 bg-white text-xs font-semibold">
-      {(["id", "en"] as const).map((l) => (
+    <div
+      role="group"
+      aria-label={label}
+      className={`inline-flex rounded-full p-0.5 text-xs font-bold ${dark ? "bg-white/15" : "bg-brand-50 ring-1 ring-brand-100"}`}
+    >
+      {(["en", "id"] as const).map((l) => (
         <button
           key={l}
           type="button"
           onClick={() => choose(l)}
           disabled={pending}
           aria-pressed={l === locale}
-          className={`px-2.5 py-1.5 uppercase ${l === locale ? "bg-zinc-900 text-white" : "text-zinc-700 hover:bg-zinc-100"}`}
+          className={`rounded-full px-3 py-1 uppercase transition ${
+            l === locale
+              ? dark
+                ? "bg-white text-brand-700"
+                : "bg-white text-brand-700 shadow-sm"
+              : dark
+                ? "text-white/85 hover:text-white"
+                : "text-ink-700 hover:text-brand-700"
+          }`}
         >
           {l}
         </button>

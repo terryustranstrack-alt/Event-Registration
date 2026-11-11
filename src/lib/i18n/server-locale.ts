@@ -1,19 +1,17 @@
 import "server-only";
-import { cookies, headers } from "next/headers";
-import { getTranslator, isLocale, localeFromAcceptLanguage, LOCALE_COOKIE, type Locale } from "./translate";
+import { cookies } from "next/headers";
+import { getTranslator, isLocale, LOCALE_COOKIE, type Locale } from "./translate";
 
 /**
- * Locale order (FR-4.5): explicit choice (cookie) → browser language →
- * organization default → Indonesian.
+ * Which language to show: the visitor's own choice from the ID/EN switch
+ * (saved in a cookie), otherwise English.
  */
-export async function getRequestLocale(orgDefault?: Locale | null): Promise<Locale> {
+export async function getRequestLocale(): Promise<Locale> {
   const cookieValue = (await cookies()).get(LOCALE_COOKIE)?.value;
-  if (isLocale(cookieValue)) return cookieValue;
-  const fromBrowser = localeFromAcceptLanguage((await headers()).get("accept-language"));
-  return fromBrowser ?? orgDefault ?? "id";
+  return isLocale(cookieValue) ? cookieValue : "en";
 }
 
-export async function getServerTranslator(orgDefault?: Locale | null) {
-  const locale = await getRequestLocale(orgDefault);
+export async function getServerTranslator() {
+  const locale = await getRequestLocale();
   return { locale, t: getTranslator(locale) };
 }

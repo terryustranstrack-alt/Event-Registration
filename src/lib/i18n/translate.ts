@@ -35,20 +35,3 @@ export function pickLocalized(locale: Locale, en?: string | null, id?: string | 
   const fallback = locale === "id" ? en : id;
   return (primary?.trim() ? primary : fallback?.trim() ? fallback : "") ?? "";
 }
-
-/** Pick a locale from an Accept-Language header, or null. */
-export function localeFromAcceptLanguage(header: string | null | undefined): Locale | null {
-  if (!header) return null;
-  const tags = header
-    .split(",")
-    .map((part) => {
-      const [tag, q] = part.trim().split(";q=");
-      return { tag: tag.toLowerCase(), q: q ? Number(q) : 1 };
-    })
-    .sort((a, b) => b.q - a.q);
-  for (const { tag } of tags) {
-    if (tag.startsWith("id") || tag.startsWith("in")) return "id";
-    if (tag.startsWith("en")) return "en";
-  }
-  return null;
-}

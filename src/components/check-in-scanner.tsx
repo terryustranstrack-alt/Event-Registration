@@ -271,12 +271,12 @@ export function CheckInScanner({
   };
 
   return (
-    <div className="flex min-h-full flex-1 flex-col bg-zinc-950 text-white">
+    <div className="flex min-h-full flex-1 flex-col bg-ink-900 text-white">
       <header className="flex items-center justify-between gap-2 px-4 py-3">
-        <Link href={backHref} className="text-sm text-zinc-300 underline">← {t("common.back")}</Link>
+        <Link href={backHref} className="text-sm text-white/75 underline">← {t("common.back")}</Link>
         <div className="min-w-0 text-right">
           <p className="truncate text-sm font-semibold">{eventTitle}</p>
-          <p className="text-xs tabular-nums text-zinc-300" aria-live="polite">
+          <p className="text-xs tabular-nums text-white/75" aria-live="polite">
             {t("checkin.counter", { checked: checkedCount, total: registered.length })}
           </p>
         </div>
@@ -289,7 +289,7 @@ export function CheckInScanner({
         </div>
       )}
 
-      <div className="flex border-b border-zinc-800" role="tablist">
+      <div className="flex border-b border-white/10" role="tablist">
         {(["scan", "search"] as const).map((key) => (
           <button
             key={key}
@@ -299,7 +299,7 @@ export function CheckInScanner({
               if (key !== "scan" && cameraOn) void stopCamera();
               setTab(key);
             }}
-            className={`flex-1 py-3 text-sm font-semibold ${tab === key ? "border-b-2 border-white" : "text-zinc-400"}`}
+            className={`flex-1 py-3 text-sm font-semibold ${tab === key ? "border-b-2 border-white" : "text-white/65"}`}
           >
             {t(key === "scan" ? "checkin.scan" : "checkin.search")}
           </button>
@@ -309,11 +309,11 @@ export function CheckInScanner({
       <main className="flex-1 px-4 py-4">
         {tab === "scan" ? (
           <div className="space-y-4">
-            <div id="qr-reader" className="mx-auto aspect-square w-full max-w-sm overflow-hidden rounded-xl bg-zinc-900" />
+            <div id="qr-reader" className="mx-auto aspect-square w-full max-w-sm overflow-hidden rounded-xl bg-ink-800" />
             {cameraError && <p role="alert" className="text-center text-sm text-red-300">{t("checkin.cameraError")}</p>}
             <div className="flex justify-center">
               {cameraOn ? (
-                <button className="btn bg-zinc-800 text-white" onClick={stopCamera}>{t("checkin.stopCamera")}</button>
+                <button className="btn bg-ink-700 text-white" onClick={stopCamera}>{t("checkin.stopCamera")}</button>
               ) : (
                 <button className="btn-primary px-6 py-3 text-base" onClick={startCamera}>📷 {t("checkin.startCamera")}</button>
               )}
@@ -332,11 +332,11 @@ export function CheckInScanner({
                 value={manualCode}
                 onChange={(e) => setManualCode(e.target.value)}
                 placeholder={t("checkin.manualCode")}
-                className="input bg-zinc-900 text-white placeholder:text-zinc-500"
+                className="input border-white/15 bg-ink-800 text-white placeholder:text-white/45"
                 autoCapitalize="off"
                 autoCorrect="off"
               />
-              <button className="btn bg-zinc-800 text-white">{t("checkin.checkIn")}</button>
+              <button className="btn shrink-0 whitespace-nowrap bg-ink-700 text-white">{t("checkin.checkIn")}</button>
             </form>
           </div>
         ) : (
@@ -348,15 +348,15 @@ export function CheckInScanner({
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder={t("checkin.searchPlaceholder")}
-              className="input bg-zinc-900 text-white placeholder:text-zinc-500"
+              className="input border-white/15 bg-ink-800 text-white placeholder:text-white/45"
               autoFocus
             />
-            <ul className="divide-y divide-zinc-800">
+            <ul className="divide-y divide-white/10">
               {matches.map((g) => (
                 <li key={g.ticket_code} className="flex items-center justify-between gap-3 py-3">
                   <div className="min-w-0">
                     <p className="truncate font-semibold">{g.full_name}</p>
-                    <p className="truncate text-xs text-zinc-400">{g.email}</p>
+                    <p className="truncate text-xs text-white/65">{g.email}</p>
                   </div>
                   {g.status === "cancelled" ? (
                     <span className="badge bg-red-900 text-red-100">{t("reg.status.cancelled")}</span>
@@ -382,7 +382,7 @@ export function CheckInScanner({
           className={`fixed inset-x-0 bottom-0 z-50 p-6 pb-10 text-center shadow-2xl ${resultStyle[result.kind]}`}
         >
           <p className="text-4xl" aria-hidden="true">{result.kind === "valid" ? "✓" : result.kind === "already_checked_in" ? "!" : "✕"}</p>
-          <p className="mt-1 text-2xl font-bold">
+          <p className="mt-1 text-3xl font-extrabold tracking-tight">
             {result.kind === "valid"
               ? t("checkin.valid")
               : result.kind === "already_checked_in"

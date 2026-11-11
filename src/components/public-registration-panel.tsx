@@ -149,17 +149,17 @@ export function PublicRegistrationPanel({
       : t("public.seatsLeftOnly", { left: formatNumber(seatsLeft, locale) });
 
   return (
-    <section aria-labelledby="register-heading" className="card">
+    <section aria-labelledby="register-heading" className="card border-0 p-6 shadow-2xl shadow-brand-800/20 ring-1 ring-brand-100">
       <div className="mb-4 flex items-center justify-between gap-3">
-        <h2 id="register-heading" className="text-xl font-bold">{t("public.registerNow")}</h2>
+        <h2 id="register-heading" className="text-2xl font-extrabold tracking-tight">{t("public.registerNow")}</h2>
         {closedReason !== "ended" && (
-          <p className={`badge ${seatsLeft === 0 ? "bg-red-100 text-red-800" : "bg-brand-100 text-brand-700"}`} aria-live="polite">
+          <p className={`badge px-3 py-1 ${seatsLeft === 0 ? "bg-red-100 text-red-800" : "bg-orange-100 text-orange-800"}`} aria-live="polite">
             {seatsText}
           </p>
         )}
       </div>
       {closedReason ? (
-        <p role="status" className="rounded-lg bg-amber-50 p-4 font-medium text-amber-900">
+        <p role="status" className="rounded-xl bg-amber-50 p-4 font-semibold text-amber-900">
           {closedReason === "not_open_yet" && opensAt
             ? t("public.closed.not_open_yet", { date: formatDateTime(opensAt, locale, timezone) })
             : t(`public.closed.${closedReason}`)}
@@ -180,7 +180,7 @@ export function PublicRegistrationPanel({
             <TurnstileWidget siteKey={turnstileSiteKey} onToken={setCaptchaToken} resetSignal={captchaReset} language={locale} />
           </div>
           {formError && <p role="alert" className="field-error mt-4">{formError}</p>}
-          <button type="submit" className="btn-primary mt-5 w-full py-3 text-base" disabled={submitting}>
+          <button type="submit" className="btn-primary mt-6 w-full py-3.5 text-base" disabled={submitting}>
             {submitting ? t("public.submitting") : t("public.submit")}
           </button>
         </form>

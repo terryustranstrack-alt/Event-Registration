@@ -46,28 +46,35 @@ export function RegistrantRowActions({
   }
 
   if (registration.status !== "registered") return null;
+  // A compact "Actions" menu keeps each table row one line tall.
+  const menuItem = "block w-full rounded-lg px-3 py-2 text-left text-sm font-semibold hover:bg-brand-50";
   return (
-    <div className="flex flex-wrap justify-end gap-1">
-      <button type="button" className="btn-secondary btn-sm" onClick={() => setEditing(true)}>{t("reg.edit")}</button>
-      <form action={resendTicketAction}>
-        {hidden}
-        <SubmitButton className="btn-secondary btn-sm">{t("reg.resend")}</SubmitButton>
-      </form>
-      {registration.checked_in_at && (
-        <form action={undoCheckInAction}>
+    <details className="group relative inline-block text-left">
+      <summary className="btn-secondary btn-sm cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+        {t("common.actions")} <span aria-hidden="true" className="transition group-open:rotate-180">▾</span>
+      </summary>
+      <div className="absolute right-0 z-20 mt-1 w-56 space-y-0.5 rounded-xl bg-white p-1.5 shadow-xl ring-1 ring-brand-100">
+        <button type="button" className={`${menuItem} text-ink-800`} onClick={() => setEditing(true)}>{t("reg.edit")}</button>
+        <form action={resendTicketAction}>
           {hidden}
-          <SubmitButton className="btn-secondary btn-sm">{t("reg.undoCheckIn")}</SubmitButton>
+          <SubmitButton className={`${menuItem} text-ink-800`}>{t("reg.resend")}</SubmitButton>
         </form>
-      )}
-      <form
-        action={cancelRegistrationAction}
-        onSubmit={(e) => {
-          if (!confirm(t("reg.confirmCancel"))) e.preventDefault();
-        }}
-      >
-        {hidden}
-        <SubmitButton className="btn-danger btn-sm">{t("reg.cancel")}</SubmitButton>
-      </form>
-    </div>
+        {registration.checked_in_at && (
+          <form action={undoCheckInAction}>
+            {hidden}
+            <SubmitButton className={`${menuItem} text-ink-800`}>{t("reg.undoCheckIn")}</SubmitButton>
+          </form>
+        )}
+        <form
+          action={cancelRegistrationAction}
+          onSubmit={(e) => {
+            if (!confirm(t("reg.confirmCancel"))) e.preventDefault();
+          }}
+        >
+          {hidden}
+          <SubmitButton className={`${menuItem} text-red-700 hover:bg-red-50`}>{t("reg.cancel")}</SubmitButton>
+        </form>
+      </div>
+    </details>
   );
 }

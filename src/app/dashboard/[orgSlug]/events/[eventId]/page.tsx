@@ -8,6 +8,6 @@ export default async function EventDetailsPage({ params }: PageProps<"/dashboard
   const { orgSlug, eventId } = await params;
   const { org } = await requireOrgMembership(orgSlug, ["admin"]);
   const event = await getOrgEvent(org.id, eventId);
-  const { locale } = await getServerTranslator(org.default_language);
+  const { locale } = await getServerTranslator();
   return <EventEditorForm key={event.id} locale={locale} orgSlug={org.slug} event={event} action={updateEventAction} />;
 }
