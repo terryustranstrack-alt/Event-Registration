@@ -232,6 +232,10 @@ export const dictionaryId: Dictionary = {
   "notFoundPage.text": "Tautannya mungkin salah, atau halamannya sudah dipindah atau dihapus.",
   "loading.label": "Memuat…",
 
+  "reminder.subject": "Pengingat: {title}",
+  "reminder.heading": "Acara Anda segera dimulai",
+  "reminder.text": "Berikut detailnya sekali lagi. Tunjukkan kode QR di bawah ini di pintu masuk.",
+
   "ticket.title": "Tiket Anda",
   "ticket.thanks": "Pendaftaran berhasil!",
   "ticket.emailSent": "Tiket ini sudah kami kirim ke {email}.",

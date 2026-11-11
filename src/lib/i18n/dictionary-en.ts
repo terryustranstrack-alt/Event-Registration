@@ -230,6 +230,10 @@ export const dictionaryEn = {
   "notFoundPage.text": "The link may be wrong, or the page has been moved or removed.",
   "loading.label": "Loading…",
 
+  "reminder.subject": "Reminder: {title}",
+  "reminder.heading": "Your event is coming up",
+  "reminder.text": "Here are the details again. Show the QR code below at the entrance.",
+
   "ticket.title": "Your ticket",
   "ticket.thanks": "You're registered!",
   "ticket.emailSent": "We've emailed this ticket to {email}.",
