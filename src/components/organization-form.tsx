@@ -69,9 +69,9 @@ export function OrganizationForm({
       </div>
       <div>
         <label htmlFor="default_language" className="field-label">{t("org.defaultLanguage")}</label>
-        <select id="default_language" name="default_language" className="input" defaultValue={org?.default_language ?? "id"}>
-          <option value="id">{t("lang.id")}</option>
+        <select id="default_language" name="default_language" className="input" defaultValue={org?.default_language ?? "en"}>
           <option value="en">{t("lang.en")}</option>
+          <option value="id">{t("lang.id")}</option>
         </select>
       </div>
       <div>

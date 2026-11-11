@@ -35,14 +35,39 @@ export interface TicketEmailInput {
 
 export function ticketEmail(input: TicketEmailInput) {
   const t = getTranslator(input.locale);
-  const when = formatEventRange(input.startsAt, input.endsAt, input.locale, input.timezone);
   const subject = `${t("ticket.title")}: ${input.eventTitle}`;
-  const html = layout(
-    input.orgName,
-    input.orgLogoUrl,
-    `<h1 style="font-size:22px;margin:0 0 8px">${esc(t("ticket.thanks"))}</h1>
-<p style="margin:0 0 16px">${esc(input.registrantName)}</p>
-<h2 style="font-size:18px;margin:0 0 4px">${esc(input.eventTitle)}</h2>
+  const intro = `<h1 style="font-size:22px;margin:0 0 8px">${esc(t("ticket.thanks"))}</h1>
+<p style="margin:0 0 16px">${esc(input.registrantName)}</p>`;
+  return {
+    subject,
+    html: layout(input.orgName, input.orgLogoUrl, intro + ticketDetailsHtml(input)),
+    text: [t("ticket.thanks"), input.registrantName, "", ticketDetailsText(input)].join("\n"),
+  };
+}
+
+/**
+ * Email pengingat sehari sebelum acara: isinya sama dengan tiket (jadwal,
+ * lokasi, kode QR), hanya judul dan kalimat pembukanya yang berbeda.
+ */
+export function reminderEmail(input: TicketEmailInput) {
+  const t = getTranslator(input.locale);
+  const subject = t("reminder.subject", { title: input.eventTitle });
+  const intro = `<h1 style="font-size:22px;margin:0 0 8px">${esc(t("reminder.heading"))}</h1>
+<p style="margin:0 0 4px">${esc(input.registrantName)}</p>
+<p style="margin:0 0 16px;color:#52525b">${esc(t("reminder.text"))}</p>`;
+  return {
+    subject,
+    html: layout(input.orgName, input.orgLogoUrl, intro + ticketDetailsHtml(input)),
+    text: [t("reminder.heading"), input.registrantName, t("reminder.text"), "", ticketDetailsText(input)].join("\n"),
+  };
+}
+
+// Bagian detail tiket (acara, jadwal, lokasi, QR, tombol) yang dipakai bersama
+// oleh email tiket dan email pengingat.
+function ticketDetailsHtml(input: TicketEmailInput): string {
+  const t = getTranslator(input.locale);
+  const when = formatEventRange(input.startsAt, input.endsAt, input.locale, input.timezone);
+  return `<h2 style="font-size:18px;margin:0 0 4px">${esc(input.eventTitle)}</h2>
 <p style="margin:0 0 4px">📅 ${esc(when)}</p>
 ${input.venue ? `<p style="margin:0 0 4px">📍 ${esc(input.venue)}${input.mapsUrl ? ` — <a href="${esc(input.mapsUrl)}">Maps</a>` : ""}</p>` : ""}
 ${input.onlineUrl ? `<p style="margin:0 0 4px">💻 <a href="${esc(input.onlineUrl)}">${esc(t("ticket.joinOnline"))}</a></p>` : ""}
@@ -51,12 +76,14 @@ ${input.onlineUrl ? `<p style="margin:0 0 4px">💻 <a href="${esc(input.onlineU
 <p style="font-size:13px;color:#52525b;margin:8px 0 0">${esc(t("ticket.show"))}</p>
 <p style="font-family:monospace;font-size:11px;color:#71717a;word-break:break-all">${esc(input.ticketCode)}</p>
 </div>
-<p style="text-align:center"><a href="${esc(input.ticketUrl)}" style="display:inline-block;background:#4f46e5;color:#ffffff;text-decoration:none;padding:12px 20px;border-radius:8px;font-weight:bold">${esc(t("ticket.open"))}</a></p>`,
-  );
-  const text = [
-    t("ticket.thanks"),
-    input.registrantName,
-    "",
+<p style="text-align:center"><a href="${esc(input.ticketUrl)}" style="display:inline-block;background:#4f46e5;color:#ffffff;text-decoration:none;padding:12px 20px;border-radius:8px;font-weight:bold">${esc(t("ticket.open"))}</a></p>`;
+}
+
+// Versi teks biasa dari detail tiket, untuk aplikasi email yang tidak menampilkan HTML.
+function ticketDetailsText(input: TicketEmailInput): string {
+  const t = getTranslator(input.locale);
+  const when = formatEventRange(input.startsAt, input.endsAt, input.locale, input.timezone);
+  return [
     input.eventTitle,
     when,
     input.venue ?? "",
@@ -67,7 +94,6 @@ ${input.onlineUrl ? `<p style="margin:0 0 4px">💻 <a href="${esc(input.onlineU
   ]
     .filter((l) => l !== null)
     .join("\n");
-  return { subject, html, text };
 }
 
 export function invitationEmail(input: {

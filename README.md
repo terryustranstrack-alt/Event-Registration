@@ -46,7 +46,7 @@ update profiles set is_platform_owner = true where email = 'you@example.com';
 | FR-3 form builder | `src/components/form-builder.tsx`, `src/components/registration-form-fields.tsx` |
 | FR-4 public page, countdown, live seats | `src/app/[orgSlug]/[eventSlug]`, `src/components/public-registration-panel.tsx` |
 | FR-5 registration + signed tickets | `src/app/api/events/[eventId]/register`, `src/lib/ticket-codes.ts`, `src/app/t/[ticketCode]` |
-| FR-7 email queue (SMTP) | `src/lib/email.ts`, `src/lib/messaging/*`, `src/app/api/cron/process-email-queue` |
+| FR-7 email queue (SMTP) + day-before reminders | `src/lib/email.ts`, `src/lib/messaging/*`, `src/app/api/cron/{process-email-queue,daily-maintenance}`, `supabase/migrations/20261111000000_event_reminder_emails.sql` |
 | FR-8 offline-capable scanner | `src/components/check-in-scanner.tsx`, `src/app/api/checkin/[eventId]` |
 | FR-9 reports + CSV/Excel export | `src/app/dashboard/[orgSlug]/events/[eventId]/{registrants,report}`, `src/app/api/events/[eventId]/export` |
 | FR-10 bilingual | `src/lib/i18n/*` |
@@ -80,3 +80,7 @@ update profiles set is_platform_owner = true where email = 'you@example.com';
 6. `vercel.json` runs both cron jobs once a day so it deploys on the Hobby plan (Hobby only allows daily
    crons). Tickets are still sent right after registration, and every registration also retries a few
    pending/failed emails. On Vercel Pro, change the email-queue schedule to `* * * * *` for faster retries.
+7. Faster email retries on the Hobby plan (free): create a job at [cron-job.org](https://cron-job.org) that
+   calls `https://<domain>/api/cron/process-email-queue` every 5 minutes with the request header
+   `Authorization: Bearer <CRON_SECRET>` (same value as in Vercel). Failed ticket emails are then retried
+   within minutes instead of waiting for the next registration or the daily cron.

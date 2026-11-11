@@ -37,7 +37,7 @@ export async function GET(request: NextRequest, ctx: RouteContext<"/api/events/[
     if (!data || data.length < 1000) break;
   }
 
-  const locale = ((event.org as unknown as { default_language: Locale })?.default_language ?? "id") as Locale;
+  const locale = ((event.org as unknown as { default_language: Locale })?.default_language ?? "en") as Locale;
   const { header, rows } = buildRegistrantTable((fields ?? []) as FormField[], registrations, locale);
   const filename = `${event.slug}-registrants-${new Date().toISOString().slice(0, 10)}`;
 
