@@ -33,7 +33,7 @@ export function buildIcsFile(event: CalendarEventInput): string {
   const lines = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
-    "PRODID:-//Racik Events//Tickets//EN",
+    "PRODID:-//Racik EventMu//Tickets//EN",
     "CALSCALE:GREGORIAN",
     "METHOD:PUBLISH",
     "BEGIN:VEVENT",

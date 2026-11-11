@@ -18,7 +18,13 @@ export const publicEnv = {
     return required("NEXT_PUBLIC_SUPABASE_ANON_KEY", "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY");
   },
   get siteUrl() {
-    return (process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000").replace(/\/$/, "");
+    // Explicit setting first, then Vercel's production domain, then local dev.
+    const vercelProduction = process.env.VERCEL_PROJECT_PRODUCTION_URL;
+    const url =
+      process.env.NEXT_PUBLIC_SITE_URL ||
+      (vercelProduction ? `https://${vercelProduction}` : "") ||
+      "http://localhost:3000";
+    return url.replace(/\/$/, "");
   },
   get turnstileSiteKey() {
     return process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? "";
@@ -30,9 +36,6 @@ export function serverEnv() {
     // Legacy service_role key, or the newer secret key (sb_secret_…).
     supabaseServiceRoleKey: required("SUPABASE_SERVICE_ROLE_KEY", "SUPABASE_SECRET_KEY"),
     ticketSigningSecret: required("TICKET_SIGNING_SECRET"),
-    brevoApiKey: process.env.BREVO_API_KEY ?? "",
-    emailFromAddress: process.env.EMAIL_FROM_ADDRESS ?? "tickets@tickets.racikdigital.com",
-    emailFromName: process.env.EMAIL_FROM_NAME ?? "Racik Tickets",
     turnstileSecretKey: process.env.TURNSTILE_SECRET_KEY ?? "",
     cronSecret: process.env.CRON_SECRET ?? "",
   };

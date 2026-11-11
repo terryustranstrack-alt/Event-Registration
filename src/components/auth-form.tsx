@@ -5,7 +5,17 @@ import { signInAction, signInWithGoogleAction, signUpAction, type AuthFormState 
 import { SubmitButton } from "@/components/submit-button";
 import { getTranslator, type Locale } from "@/lib/i18n/translate";
 
-export function AuthForm({ mode, locale, next }: { mode: "signin" | "signup"; locale: Locale; next?: string }) {
+export function AuthForm({
+  mode,
+  locale,
+  next,
+  notice,
+}: {
+  mode: "signin" | "signup";
+  locale: Locale;
+  next?: string;
+  notice?: string | null;
+}) {
   const t = getTranslator(locale);
   const [state, formAction] = useActionState<AuthFormState, FormData>(
     mode === "signin" ? signInAction : signUpAction,
@@ -15,6 +25,11 @@ export function AuthForm({ mode, locale, next }: { mode: "signin" | "signup"; lo
   return (
     <div className="card mx-auto w-full max-w-md">
       <h1 className="mb-6 text-2xl font-bold">{t(mode === "signin" ? "auth.signInTitle" : "auth.signUpTitle")}</h1>
+      {notice && (
+        <p role="alert" className="mb-4 rounded-lg bg-amber-50 p-3 text-sm text-amber-900">
+          {notice}
+        </p>
+      )}
       <form action={signInWithGoogleAction}>
         <input type="hidden" name="next" value={next ?? ""} />
         <SubmitButton className="btn-secondary w-full">{t("auth.withGoogle")}</SubmitButton>

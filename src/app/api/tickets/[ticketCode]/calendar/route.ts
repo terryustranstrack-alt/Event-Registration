@@ -10,7 +10,7 @@ export async function GET(_request: NextRequest, ctx: RouteContext<"/api/tickets
   if (!ticket) return new NextResponse("Not found", { status: 404 });
   const { event, registration } = ticket;
   const ics = buildIcsFile({
-    uid: `${registration.id}@racik-events`,
+    uid: `${registration.id}@racik-eventmu`,
     title: pickLocalized(registration.language, event.title_en, event.title_id),
     location: event.online_url ?? ([event.venue_name, event.venue_address].filter(Boolean).join(", ") || undefined),
     startsAt: event.starts_at,
