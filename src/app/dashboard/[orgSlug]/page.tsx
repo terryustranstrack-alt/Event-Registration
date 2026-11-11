@@ -3,71 +3,109 @@ import { requireOrgMembership } from "@/lib/auth-guards";
 import { createSupabaseServerClient } from "@/lib/supabase/server-client";
 import { getServerTranslator } from "@/lib/i18n/server-locale";
 import { formatDateTime, formatNumber } from "@/lib/i18n/format";
-import { pickLocalized } from "@/lib/i18n/translate";
+import { pickLocalized, type Locale, type Translate } from "@/lib/i18n/translate";
 import { EventStatusBadge } from "@/components/event-status-badge";
+import { PageHeader } from "@/components/page-header";
+import { CalendarIcon, CheckIcon, PlusIcon, TicketIcon } from "@/components/icons";
 import type { EventRow } from "@/lib/domain-types";
 
-/** Org overview: all events with headline numbers (FR-9.5). */
+type EventCardData = Pick<EventRow, "id" | "title_en" | "title_id" | "starts_at" | "timezone" | "status" | "capacity" | "seats_taken" | "banner_url">;
+
+/** Organization overview: all events with headline numbers (FR-9.5). */
 export default async function OrgEventsPage({ params }: PageProps<"/dashboard/[orgSlug]">) {
   const { orgSlug } = await params;
   const { org, role } = await requireOrgMembership(orgSlug);
-  const { locale, t } = await getServerTranslator(org.default_language);
-  const supabase = await createSupabaseServerClient();
-
-  const { data: events } = await supabase
-    .from("events")
-    .select("id, slug, title_en, title_id, starts_at, timezone, status, capacity, seats_taken")
-    .eq("org_id", org.id)
-    .order("starts_at", { ascending: false });
-  const eventIds = (events ?? []).map((e) => e.id);
-  const { data: checkedRows } = eventIds.length
-    ? await supabase.from("registrations").select("event_id").in("event_id", eventIds).eq("status", "registered").not("checked_in_at", "is", null)
-    : { data: [] as { event_id: string }[] };
-  const checkedByEvent = new Map<string, number>();
-  for (const row of checkedRows ?? []) checkedByEvent.set(row.event_id, (checkedByEvent.get(row.event_id) ?? 0) + 1);
+  const { locale, t } = await getServerTranslator();
+  const events = await loadEvents(org.id);
+  const checkedIn = await loadCheckedInCounts(events.map((e) => e.id));
+  const newEventHref = `/dashboard/${org.slug}/events/new`;
 
   return (
     <div>
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold">{t("nav.events")}</h1>
-        {role === "admin" && (
-          <Link href={`/dashboard/${org.slug}/events/new`} className="btn-primary">+ {t("event.new")}</Link>
-        )}
-      </div>
-      {(events ?? []).length === 0 ? (
-        <p className="card text-zinc-600">{t("event.none")}</p>
-      ) : (
-        <div className="card overflow-x-auto p-0">
-          <table className="w-full text-left text-sm">
-            <thead className="bg-zinc-50 text-zinc-600">
-              <tr>
-                <th className="px-4 py-3">{t("nav.events")}</th>
-                <th className="px-4 py-3">{t("event.startsAt")}</th>
-                <th className="px-4 py-3">{t("event.status")}</th>
-                <th className="px-4 py-3 text-right">{t("report.registered")}</th>
-                <th className="px-4 py-3 text-right">{t("report.checkedIn")}</th>
-                <th className="px-4 py-3 text-right">{t("report.seatsLeft")}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {(events as EventRow[]).map((e) => (
-                <tr key={e.id} className="border-t border-zinc-100 hover:bg-zinc-50">
-                  <td className="px-4 py-3 font-medium">
-                    <Link href={`/dashboard/${org.slug}/events/${e.id}${role === "admin" ? "" : "/registrants"}`} className="text-brand-700 hover:underline">
-                      {pickLocalized(locale, e.title_en, e.title_id)}
-                    </Link>
-                  </td>
-                  <td className="px-4 py-3 text-zinc-700">{formatDateTime(e.starts_at, locale, e.timezone)}</td>
-                  <td className="px-4 py-3"><EventStatusBadge status={e.status} t={t} /></td>
-                  <td className="px-4 py-3 text-right tabular-nums">{formatNumber(e.seats_taken, locale)} / {formatNumber(e.capacity, locale)}</td>
-                  <td className="px-4 py-3 text-right tabular-nums">{formatNumber(checkedByEvent.get(e.id) ?? 0, locale)}</td>
-                  <td className="px-4 py-3 text-right tabular-nums">{formatNumber(Math.max(e.capacity - e.seats_taken, 0), locale)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      <PageHeader
+        eyebrow={org.name}
+        title={t("nav.events")}
+        actions={role === "admin" && <Link href={newEventHref} className="btn-primary"><PlusIcon size={18} /> {t("event.new")}</Link>}
+      />
+      {events.length === 0 ? (
+        <div className="card flex flex-col items-center px-6 py-14 text-center">
+          <span className="bg-festival grid h-14 w-14 place-items-center rounded-2xl text-white"><TicketIcon size={28} /></span>
+          <p className="mt-4 text-lg font-bold">{t("event.none")}</p>
+          <p className="mt-1 text-ink-700">{t("event.noneHint")}</p>
+          {role === "admin" && <Link href={newEventHref} className="btn-primary mt-6"><PlusIcon size={18} /> {t("event.new")}</Link>}
         </div>
+      ) : (
+        <ul className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+          {events.map((e) => (
+            <li key={e.id}>
+              <EventCard
+                event={e}
+                checkedIn={checkedIn.get(e.id) ?? 0}
+                href={`/dashboard/${org.slug}/events/${e.id}${role === "admin" ? "" : "/registrants"}`}
+                locale={locale}
+                t={t}
+              />
+            </li>
+          ))}
+        </ul>
       )}
     </div>
+  );
+}
+
+async function loadEvents(orgId: string): Promise<EventCardData[]> {
+  const supabase = await createSupabaseServerClient();
+  const { data } = await supabase
+    .from("events")
+    .select("id, title_en, title_id, starts_at, timezone, status, capacity, seats_taken, banner_url")
+    .eq("org_id", orgId)
+    .order("starts_at", { ascending: false });
+  return (data ?? []) as EventCardData[];
+}
+
+/** Number of checked-in guests per event. */
+async function loadCheckedInCounts(eventIds: string[]): Promise<Map<string, number>> {
+  const counts = new Map<string, number>();
+  if (eventIds.length === 0) return counts;
+  const supabase = await createSupabaseServerClient();
+  const { data } = await supabase
+    .from("registrations")
+    .select("event_id")
+    .in("event_id", eventIds)
+    .eq("status", "registered")
+    .not("checked_in_at", "is", null);
+  for (const row of data ?? []) counts.set(row.event_id, (counts.get(row.event_id) ?? 0) + 1);
+  return counts;
+}
+
+function EventCard({ event, checkedIn, href, locale, t }: { event: EventCardData; checkedIn: number; href: string; locale: Locale; t: Translate }) {
+  const filled = Math.min(100, Math.round((event.seats_taken / Math.max(event.capacity, 1)) * 100));
+  return (
+    <Link href={href} className="card group block h-full overflow-hidden p-0 transition hover:-translate-y-1 hover:shadow-xl">
+      <div className="bg-festival relative aspect-[16/7] overflow-hidden">
+        {event.banner_url && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={event.banner_url} alt="" className="h-full w-full object-cover transition duration-300 group-hover:scale-105" />
+        )}
+        <div className="absolute left-3 top-3"><EventStatusBadge status={event.status} t={t} /></div>
+      </div>
+      <div className="p-5">
+        <h2 className="line-clamp-2 text-lg font-extrabold leading-snug text-ink-900 group-hover:text-brand-700">
+          {pickLocalized(locale, event.title_en, event.title_id)}
+        </h2>
+        <p className="mt-1.5 flex items-center gap-1.5 text-sm text-ink-700">
+          <CalendarIcon size={15} className="text-pop-600" /> {formatDateTime(event.starts_at, locale, event.timezone)}
+        </p>
+        <div className="mt-4">
+          <div className="h-2 overflow-hidden rounded-full bg-brand-50">
+            <div className="h-full rounded-full bg-linear-to-r from-brand-600 to-pop-500" style={{ width: `${filled}%` }} />
+          </div>
+          <div className="mt-2 flex justify-between text-xs font-semibold text-ink-700">
+            <span>{t("event.seatsFilled", { taken: formatNumber(event.seats_taken, locale), total: formatNumber(event.capacity, locale) })}</span>
+            <span className="flex items-center gap-1 text-emerald-700"><CheckIcon size={14} /> {formatNumber(checkedIn, locale)}</span>
+          </div>
+        </div>
+      </div>
+    </Link>
   );
 }

@@ -72,7 +72,8 @@ export function RegistrationFormFields({
       </div>
       <div>
         <label htmlFor={`${idPrefix}-language`} className="field-label">{t("public.language")}</label>
-        <select id={`${idPrefix}-language`} name="language" defaultValue={locale} className="input">
+        {/* key: re-pick the default when the visitor switches the page language. */}
+        <select key={locale} id={`${idPrefix}-language`} name="language" defaultValue={locale} className="input">
           <option value="id">{t("lang.id")}</option>
           <option value="en">{t("lang.en")}</option>
         </select>
@@ -84,7 +85,7 @@ export function RegistrationFormFields({
 
       {consentEnabled && (
         <div>
-          <label className="flex items-start gap-2 text-sm text-zinc-800">
+          <label className="flex items-start gap-2 text-sm text-ink-800">
             <input
               type="checkbox"
               name="consent"

@@ -20,7 +20,7 @@ export default async function CheckInPage({ params }: PageProps<"/checkin/[event
     .maybeSingle();
   if (!event) notFound();
   const org = event.org as unknown as { slug: string; name: string; default_language: "en" | "id" };
-  const { locale } = await getServerTranslator(org.default_language);
+  const { locale } = await getServerTranslator();
   return (
     <CheckInScannerLoader
       eventId={event.id}

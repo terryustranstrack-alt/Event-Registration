@@ -8,7 +8,7 @@ export default async function EventFormBuilderPage({ params }: PageProps<"/dashb
   const { org } = await requireOrgMembership(orgSlug, ["admin"]);
   const event = await getOrgEvent(org.id, eventId);
   const fields = await getEventFormFields(event.id);
-  const { locale } = await getServerTranslator(org.default_language);
+  const { locale } = await getServerTranslator();
   return (
     <FormBuilder
       locale={locale}

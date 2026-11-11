@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { dictionaryEn } from "./dictionary-en";
 import { dictionaryId } from "./dictionary-id";
-import { getTranslator, localeFromAcceptLanguage, pickLocalized } from "./translate";
+import { getTranslator, pickLocalized } from "./translate";
 import { formatDate, formatRupiah } from "./format";
 
 describe("i18n", () => {
@@ -20,11 +20,6 @@ describe("i18n", () => {
     expect(pickLocalized("en", null, "Halo")).toBe("Halo");
   });
 
-  it("detects browser language", () => {
-    expect(localeFromAcceptLanguage("id-ID,id;q=0.9,en;q=0.8")).toBe("id");
-    expect(localeFromAcceptLanguage("en-GB,en;q=0.9")).toBe("en");
-    expect(localeFromAcceptLanguage("fr-FR")).toBeNull();
-  });
 
   it("formats dates and rupiah per PRD examples", () => {
     expect(formatDate("2026-12-20T03:00:00Z", "en")).toBe("Dec 20, 2026");

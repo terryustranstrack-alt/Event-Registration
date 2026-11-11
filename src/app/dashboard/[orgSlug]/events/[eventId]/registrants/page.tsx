@@ -15,7 +15,7 @@ export default async function RegistrantsPage({ params, searchParams }: PageProp
   const sp = await searchParams;
   const { org, role } = await requireOrgMembership(orgSlug);
   const event = await getOrgEvent(org.id, eventId);
-  const { locale, t } = await getServerTranslator(org.default_language);
+  const { locale, t } = await getServerTranslator();
   const q = typeof sp.q === "string" ? sp.q.trim() : "";
   const status = typeof sp.status === "string" ? sp.status : "all";
   const checked = typeof sp.checked === "string" ? sp.checked : "all";
@@ -43,7 +43,7 @@ export default async function RegistrantsPage({ params, searchParams }: PageProp
     const params = new URLSearchParams({ ...(q && { q }), status, checked, page: String(p) });
     return `?${params}`;
   };
-  const emailBadge = { pending: "bg-zinc-100 text-zinc-700", sent: "bg-green-100 text-green-800", failed: "bg-red-100 text-red-800" };
+  const emailBadge = { pending: "bg-zinc-100 text-zinc-700", sent: "bg-emerald-100 text-emerald-800", failed: "bg-red-100 text-red-800" };
 
   return (
     <div className="space-y-4">
@@ -74,11 +74,11 @@ export default async function RegistrantsPage({ params, searchParams }: PageProp
       </div>
 
       {rows.length === 0 ? (
-        <p className="card text-zinc-600">{t("reg.none")}</p>
+        <p className="card text-center text-ink-700">{t("reg.none")}</p>
       ) : (
-        <div className="card overflow-x-auto p-0">
+        <div className="card overflow-x-auto p-0 pb-24">
           <table className="w-full text-left text-sm">
-            <thead className="bg-zinc-50 text-zinc-600">
+            <thead className="bg-brand-50/70 text-xs font-bold uppercase tracking-wider text-ink-700">
               <tr>
                 <th className="px-4 py-3">{t("reg.table.name")}</th>
                 <th className="px-4 py-3">{t("reg.table.status")}</th>
@@ -90,17 +90,17 @@ export default async function RegistrantsPage({ params, searchParams }: PageProp
             </thead>
             <tbody>
               {rows.map((r) => (
-                <tr key={r.id} className="border-t border-zinc-100 align-top">
+                <tr key={r.id} className="border-t border-brand-50 align-middle hover:bg-brand-50/40">
                   <td className="px-4 py-3">
-                    <p className="font-medium">{r.full_name}</p>
-                    <p className="text-xs text-zinc-600">{r.email}</p>
+                    <p className="font-bold">{r.full_name}</p>
+                    <p className="text-xs text-ink-700/75">{r.email}</p>
                   </td>
                   <td className="px-4 py-3">
                     <span className={`badge ${r.status === "registered" ? "bg-brand-50 text-brand-700" : "bg-red-100 text-red-800"}`}>
                       {t(`reg.status.${r.status}`)}
                     </span>
                   </td>
-                  <td className="px-4 py-3 whitespace-nowrap text-zinc-700">{formatDateTime(r.created_at, locale, event.timezone)}</td>
+                  <td className="px-4 py-3 whitespace-nowrap text-ink-700">{formatDateTime(r.created_at, locale, event.timezone)}</td>
                   <td className="px-4 py-3 whitespace-nowrap">{r.checked_in_at ? `✓ ${formatDateTime(r.checked_in_at, locale, event.timezone)}` : "—"}</td>
                   <td className="px-4 py-3">
                     <span className={`badge ${emailBadge[r.email_status]}`} title={r.email_error ?? undefined}>{t(`reg.email.${r.email_status}`)}</span>

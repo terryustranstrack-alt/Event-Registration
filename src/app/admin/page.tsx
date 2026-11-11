@@ -46,18 +46,18 @@ export default async function OwnerConsolePage() {
     <>
       <SiteHeader />
       <main className="mx-auto w-full max-w-6xl flex-1 space-y-6 px-4 py-8">
-        <h1 className="text-2xl font-bold">{t("owner.title")}</h1>
+        <h1 className="text-3xl font-extrabold tracking-tight">{t("owner.title")}</h1>
         <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
           {cards.map((c) => (
             <div key={c.label} className="card p-4">
-              <p className="text-xs font-medium uppercase text-zinc-600">{c.label}</p>
-              <p className="mt-1 text-2xl font-bold tabular-nums">{formatNumber(c.value, locale)}</p>
+              <p className="text-xs font-bold uppercase tracking-wider text-ink-700">{c.label}</p>
+              <p className="mt-1 text-3xl font-extrabold tracking-tight tabular-nums">{formatNumber(c.value, locale)}</p>
             </div>
           ))}
         </div>
         <div className="card overflow-x-auto p-0">
           <table className="w-full text-left text-sm">
-            <thead className="bg-zinc-50 text-zinc-600">
+            <thead className="bg-brand-50/70 text-ink-700">
               <tr>
                 <th className="px-4 py-3">{t("owner.orgs")}</th>
                 <th className="px-4 py-3">{t("owner.status")}</th>
@@ -72,10 +72,10 @@ export default async function OwnerConsolePage() {
                 const stats = perOrg.get(o.id) ?? { events: 0, registrations: 0 };
                 const suspended = o.status === "suspended";
                 return (
-                  <tr key={o.id} className="border-t border-zinc-100">
+                  <tr key={o.id} className="border-t border-brand-50">
                     <td className="px-4 py-3">
                       <Link href={`/dashboard/${o.slug}`} className="font-medium text-brand-700 hover:underline">{o.name}</Link>
-                      <p className="text-xs text-zinc-600">/{o.slug} · {o.contact_email ?? "—"}</p>
+                      <p className="text-xs text-ink-700">/{o.slug} · {o.contact_email ?? "—"}</p>
                     </td>
                     <td className="px-4 py-3">
                       <span className={`badge ${suspended ? "bg-red-100 text-red-800" : "bg-green-100 text-green-800"}`}>{o.status}</span>

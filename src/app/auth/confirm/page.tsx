@@ -26,13 +26,13 @@ export default async function ConfirmEmailPage({ searchParams }: PageProps<"/aut
       <SiteHeader />
       <main className="flex flex-1 items-start justify-center px-4 py-12">
         <div className="card w-full max-w-md space-y-4 text-center">
-          <h1 className="text-2xl font-bold">{t("auth.confirmTitle")}</h1>
+          <h1 className="text-3xl font-extrabold tracking-tight">{t("auth.confirmTitle")}</h1>
           {valid ? (
             <form action={confirmEmailAction} className="space-y-4">
               <input type="hidden" name="token_hash" value={tokenHash!} />
               <input type="hidden" name="type" value={type!} />
               <input type="hidden" name="next" value={next} />
-              <p className="text-sm text-zinc-700">{t("auth.confirmHelp")}</p>
+              <p className="text-sm text-ink-700">{t("auth.confirmHelp")}</p>
               <SubmitButton className="btn-primary w-full" pendingLabel={t("common.loading")}>
                 {t("auth.confirmButton")}
               </SubmitButton>

@@ -75,6 +75,8 @@ update profiles set is_platform_owner = true where email = 'you@example.com';
    ```
 3. Set every variable from `.env.example` in Vercel (generate `TICKET_SIGNING_SECRET` and `CRON_SECRET`).
 4. Set the `SMTP_*` and `EMAIL_FROM` variables, with `tickets.racikdigital.com` verified at your email provider (SPF, DKIM, DMARC).
-5. `vercel.json` runs both cron jobs once a day so it deploys on the Hobby plan (Hobby only allows daily
+5. Optional: set `DEEPL_API_KEY` (free plan at deepl.com/pro-api, key ends in `:fx`) to enable the
+   "Translate to Indonesian" buttons. Without it, organizers can still type the Indonesian text themselves.
+6. `vercel.json` runs both cron jobs once a day so it deploys on the Hobby plan (Hobby only allows daily
    crons). Tickets are still sent right after registration, and every registration also retries a few
    pending/failed emails. On Vercel Pro, change the email-queue schedule to `* * * * *` for faster retries.
