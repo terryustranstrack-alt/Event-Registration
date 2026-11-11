@@ -52,18 +52,23 @@ export default async function PublicEventPage({ params }: PageProps<"/[orgSlug]/
 
   return (
     <>
-      {/* Hero: the event banner (or brand gradient) behind the title and countdown. */}
+      {/* Bagian atas: banner ditampilkan utuh (tidak terpotong, tidak digelapkan),
+          lalu judul, tanggal, dan hitung mundur di bawahnya — bukan di atas gambar. */}
       <div className="relative overflow-hidden bg-ink-900 text-white">
-        {event.banner_url ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={event.banner_url} alt="" className="absolute inset-0 h-full w-full object-cover" fetchPriority="high" />
-        ) : (
-          <div aria-hidden="true" className="bg-festival absolute inset-0 opacity-90" />
-        )}
-        {/* Darkening layer keeps white text readable on any photo. */}
-        <div aria-hidden="true" className="absolute inset-0 bg-linear-to-b from-ink-900/70 via-ink-900/55 to-ink-900/95" />
+        {!event.banner_url && <div aria-hidden="true" className="bg-festival absolute inset-0 opacity-90" />}
         <PublicPageHeader orgName={org.name} logoUrl={org.logo_url} locale={locale} t={t} />
-        <div className="relative mx-auto max-w-6xl px-4 pb-28 pt-8 sm:pt-16 lg:pb-36">
+        {event.banner_url && (
+          <div className="relative mx-auto max-w-6xl px-4">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={event.banner_url}
+              alt={title}
+              className="h-auto w-full rounded-3xl shadow-2xl shadow-black/40"
+              fetchPriority="high"
+            />
+          </div>
+        )}
+        <div className="relative mx-auto max-w-6xl px-4 pb-28 pt-8 lg:pb-36">
           <p className="eyebrow text-sun-400">{t("public.organizedBy", { org: org.name })}</p>
           <h1 className="mt-3 max-w-4xl text-4xl font-extrabold leading-[1.05] tracking-tight sm:text-6xl">{title}</h1>
           <ul className="mt-6 flex flex-wrap gap-2 text-sm font-semibold">
@@ -101,6 +106,11 @@ export default async function PublicEventPage({ params }: PageProps<"/[orgSlug]/
       <main className="relative mx-auto -mt-20 grid w-full max-w-6xl flex-1 gap-6 px-4 pb-16 lg:-mt-24 lg:grid-cols-[minmax(0,1fr)_420px]">
         <article className="card min-w-0 space-y-6 p-6 sm:p-8 lg:self-start">
           <h2 className="text-2xl font-extrabold tracking-tight">{t("public.about")}</h2>
+          {/* Gambar kedua dari penyelenggara (mis. poster/rundown), ditampilkan utuh di atas deskripsi. */}
+          {event.about_image_url && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={event.about_image_url} alt="" loading="lazy" className="h-auto w-full rounded-2xl ring-1 ring-brand-100" />
+          )}
           {description && <div className="prose-event text-[17px] text-ink-800" dangerouslySetInnerHTML={{ __html: description }} />}
           {event.extra_links.length > 0 && (
             <section>

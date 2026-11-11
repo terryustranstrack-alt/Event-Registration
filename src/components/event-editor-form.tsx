@@ -2,6 +2,7 @@
 import { useActionState, useState } from "react";
 import { SubmitButton } from "@/components/submit-button";
 import { TranslateButton } from "@/components/translate-button";
+import { EventImagePicker } from "@/components/event-image-picker";
 import { CalendarIcon, LanguagesIcon, MapPinIcon, ShieldIcon, SparklesIcon, TicketIcon } from "@/components/icons";
 import { getTranslator, type Locale } from "@/lib/i18n/translate";
 import { slugify } from "@/lib/slug-utils";
@@ -37,7 +38,6 @@ export function EventEditorForm({
   const [timezone, setTimezone] = useState(event?.timezone ?? "Asia/Jakarta");
   const [slug, setSlug] = useState(event?.slug ?? "");
   const [slugTouched, setSlugTouched] = useState(Boolean(event));
-  const [bannerPreview, setBannerPreview] = useState<string | null>(event?.banner_url ?? null);
   const [titleEn, setTitleEn] = useState(event?.title_en ?? "");
   const [titleId, setTitleId] = useState(event?.title_id ?? "");
   const [descriptionEn, setDescriptionEn] = useState(event?.description_en ?? "");
@@ -116,39 +116,24 @@ export function EventEditorForm({
           />
           <p id="desc-help" className="field-help">{t("event.descriptionHelp")}</p>
         </div>
-        <div>
-          <span className="field-label">{t("event.banner")}</span>
-          <label
-            htmlFor="banner"
-            className="bg-festival group relative flex aspect-video w-full max-w-md cursor-pointer items-center justify-center overflow-hidden rounded-2xl text-white"
-          >
-            {bannerPreview ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={bannerPreview} alt="" className="absolute inset-0 h-full w-full object-cover" />
-            ) : null}
-            <span className="relative rounded-xl bg-black/35 px-4 py-2 text-sm font-bold backdrop-blur group-hover:bg-black/50">
-              {t("event.bannerChoose")}
-            </span>
-          </label>
-          <input
-            id="banner"
-            name="banner"
-            type="file"
-            accept="image/jpeg,image/png,image/webp"
-            className="sr-only"
-            aria-describedby="banner-help"
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) setBannerPreview(URL.createObjectURL(file));
-            }}
-          />
-          <p id="banner-help" className="field-help">{t("event.bannerHelp")}</p>
-          {event?.banner_url && (
-            <label className="mt-2 flex items-center gap-2 text-sm">
-              <input type="checkbox" name="remove_banner" /> {t("form.delete")}
-            </label>
-          )}
-        </div>
+        <EventImagePicker
+          name="banner"
+          removeName="remove_banner"
+          label={t("event.banner")}
+          help={t("event.bannerHelp")}
+          chooseLabel={t("event.bannerChoose")}
+          deleteLabel={t("form.delete")}
+          initialUrl={event?.banner_url ?? null}
+        />
+        <EventImagePicker
+          name="about_image"
+          removeName="remove_about_image"
+          label={t("event.aboutImage")}
+          help={t("event.aboutImageHelp")}
+          chooseLabel={t("event.bannerChoose")}
+          deleteLabel={t("form.delete")}
+          initialUrl={event?.about_image_url ?? null}
+        />
       </FormSection>
 
       <FormSection title={t("event.section.when")} icon={<CalendarIcon size={18} />}>

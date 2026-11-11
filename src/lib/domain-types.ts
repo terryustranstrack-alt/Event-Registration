@@ -58,6 +58,7 @@ export interface EventRow {
   description_en: string | null;
   description_id: string | null;
   banner_url: string | null;
+  about_image_url: string | null;
   starts_at: string;
   ends_at: string;
   timezone: string;

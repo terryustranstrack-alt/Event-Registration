@@ -9,6 +9,25 @@ import { isValidTimeZone, zonedLocalToUtcIso } from "@/lib/timezone-utils";
 import { FORM_FIELD_TYPES, type EventStatus } from "@/lib/domain-types";
 import { uploadOrgImage, type FormState } from "./organization-actions";
 
+// Gambar acara yang bisa diunggah dari editor: kolom di database, nama input
+// file, nama kotak centang "hapus", dan awalan nama file di penyimpanan.
+const EVENT_IMAGES = [
+  { column: "banner_url", input: "banner", remove: "remove_banner", prefix: "banner" },
+  { column: "about_image_url", input: "about_image", remove: "remove_about_image", prefix: "about" },
+] as const;
+type EventImage = (typeof EVENT_IMAGES)[number];
+
+/**
+ * Cek apa yang diminta untuk satu gambar acara: hapus (null), ganti dengan
+ * unggahan baru (alamat gambar), atau biarkan (undefined).
+ */
+async function readEventImageChange(formData: FormData, orgId: string, eventId: string, image: EventImage) {
+  if (formData.get(image.remove) === "on") return null;
+  const file = formData.get(image.input);
+  if (file instanceof File && file.size > 0) return uploadOrgImage(orgId, `events/${eventId}/${image.prefix}`, file);
+  return undefined;
+}
+
 const optionalUrl = z
   .string()
   .trim()
@@ -109,11 +128,10 @@ export async function createEventAction(_prev: FormState, formData: FormData): P
     return { error: error?.code === "23505" ? "An event with this URL name already exists." : (error?.message ?? "Could not create event.") };
   }
 
-  const banner = formData.get("banner");
-  if (banner instanceof File && banner.size > 0) {
+  for (const image of EVENT_IMAGES) {
     try {
-      const url = await uploadOrgImage(org.id, `events/${event.id}/banner`, banner);
-      await supabase.from("events").update({ banner_url: url }).eq("id", event.id);
+      const url = await readEventImageChange(formData, org.id, event.id, image);
+      if (url) await supabase.from("events").update({ [image.column]: url }).eq("id", event.id);
     } catch {
       // Optional; can be re-uploaded from the editor.
     }
@@ -134,15 +152,14 @@ export async function updateEventAction(_prev: FormState, formData: FormData): P
   const update: Record<string, unknown> = { ...parsed.data };
   if (current.status !== "draft") update.slug = current.slug; // FR-2.5
 
-  const banner = formData.get("banner");
-  if (banner instanceof File && banner.size > 0) {
+  for (const image of EVENT_IMAGES) {
     try {
-      update.banner_url = await uploadOrgImage(org.id, `events/${eventId}/banner`, banner);
+      const value = await readEventImageChange(formData, org.id, eventId, image);
+      if (value !== undefined) update[image.column] = value;
     } catch (err) {
       return { error: err instanceof Error ? err.message : "Upload failed." };
     }
   }
-  if (formData.get("remove_banner") === "on") update.banner_url = null;
 
   const { error } = await supabase.from("events").update(update).eq("id", eventId).eq("org_id", org.id);
   if (error) {
