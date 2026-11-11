@@ -299,6 +299,7 @@ export const dictionaryId: Dictionary = {
   "ticket.name": "Nama",
   "ticket.checkedIn": "Check-in pada {time}",
   "ticket.open": "Buka tiket web",
+  "ticket.whatsapp": "Kirim tiket ke WhatsApp",
 
   "checkin.title": "Check-in",
   "checkin.scan": "Pindai",

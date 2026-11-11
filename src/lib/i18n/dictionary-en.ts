@@ -297,6 +297,7 @@ export const dictionaryEn = {
   "ticket.name": "Name",
   "ticket.checkedIn": "Checked in at {time}",
   "ticket.open": "Open web ticket",
+  "ticket.whatsapp": "Send ticket to WhatsApp",
 
   "checkin.title": "Check-in",
   "checkin.scan": "Scan",

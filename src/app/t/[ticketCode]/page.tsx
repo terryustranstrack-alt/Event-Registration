@@ -6,6 +6,7 @@ import { getTranslator, isLocale, LOCALE_COOKIE, pickLocalized } from "@/lib/i18
 import { formatDateTime, formatEventRange } from "@/lib/i18n/format";
 import { qrCodeSvg } from "@/lib/qr-code-image";
 import { googleCalendarUrl } from "@/lib/calendar-invite";
+import { whatsAppShareUrl, whatsAppTicketMessage } from "@/lib/whatsapp-share";
 import { publicEnv } from "@/lib/env";
 import { PublicPageHeader } from "@/components/public-page-header";
 import { ArrowLeftIcon, CalendarIcon, CheckIcon, MapPinIcon, VideoIcon } from "@/components/icons";
@@ -37,6 +38,15 @@ export default async function TicketPage({ params, searchParams }: PageProps<"/t
     endsAt: event.ends_at,
     url: ticketUrl,
   };
+  // Pesan WhatsApp berisi info acara + link tiket web, supaya tiket gampang dibuka lagi dari chat.
+  const whatsAppUrl = whatsAppShareUrl(
+    whatsAppTicketMessage({
+      title,
+      when: formatEventRange(event.starts_at, event.ends_at, locale, event.timezone),
+      venue: venue || undefined,
+      ticketUrl,
+    }),
+  );
 
   return (
     <div className="bg-festival relative flex min-h-full flex-1 flex-col">
@@ -115,6 +125,9 @@ export default async function TicketPage({ params, searchParams }: PageProps<"/t
                   </a>
                   <a href={googleCalendarUrl(calendarInput)} target="_blank" rel="noreferrer" className="btn-secondary">Google Calendar</a>
                 </div>
+                <a href={whatsAppUrl} target="_blank" rel="noreferrer" className="btn-secondary">
+                  {t("ticket.whatsapp")}
+                </a>
               </div>
             )}
           </div>
