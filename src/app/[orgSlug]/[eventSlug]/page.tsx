@@ -137,7 +137,7 @@ export default async function PublicEventPage({ params }: PageProps<"/[orgSlug]/
         </div>
       </main>
       <footer className="flex items-center justify-center gap-2 pb-10 text-xs font-semibold text-ink-700/70">
-        {t("public.poweredBy")} <BrandLogo />
+        {t("public.poweredBy")} <BrandLogo className="h-7" />
       </footer>
     </>
   );

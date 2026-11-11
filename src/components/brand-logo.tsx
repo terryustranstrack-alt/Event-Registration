@@ -1,16 +1,20 @@
 import Link from "next/link";
-import { TicketIcon } from "@/components/icons";
 
-/** Racik EventMu logo: gradient ticket badge + name. */
-export function BrandLogo({ href = "/", light = false }: { href?: string; light?: boolean }) {
+/**
+ * Racik EventMu logo (icon + name). `light` = white version for dark or
+ * colored backgrounds; the default is the dark version for light backgrounds.
+ */
+export function BrandLogo({ href = "/", light = false, className = "h-12" }: { href?: string; light?: boolean; className?: string }) {
   return (
-    <Link href={href} className="inline-flex items-center gap-2.5" aria-label="Racik EventMu — home">
-      <span className="bg-festival grid h-9 w-9 place-items-center rounded-xl text-white shadow-md shadow-pop-600/30">
-        <TicketIcon size={20} />
-      </span>
-      <span className={`text-lg font-extrabold tracking-tight ${light ? "text-white" : "text-ink-900"}`}>
-        Racik <span className={light ? "text-sun-400" : "text-festival"}>EventMu</span>
-      </span>
+    <Link href={href} className="inline-flex shrink-0 items-center" aria-label="Racik EventMu — home">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={light ? "/brand/racik-eventmu-logo-light.png" : "/brand/racik-eventmu-logo-dark.png"}
+        alt="Racik EventMu"
+        width={1200}
+        height={410}
+        className={`${className} w-auto`}
+      />
     </Link>
   );
 }
